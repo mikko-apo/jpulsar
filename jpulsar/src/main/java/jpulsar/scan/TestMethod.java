@@ -1,19 +1,18 @@
 package jpulsar.scan;
 
-class TestMethod {
-    private String name;
-    private Class<?>[] parameters;
+import jpulsar.scan.annotationdata.TestAnnotationData;
 
-    public TestMethod(String name, Class<?>[] parameters) {
-        this.name = name;
-        this.parameters = parameters;
+import java.util.List;
+
+public class TestMethod extends TestMethodBase {
+    private TestAnnotationData testAnnotationData;
+
+    public TestMethod(String methodName, List<Class<?>> methodParameterTypes, TestAnnotationData testAnnotation) {
+        super(methodName, methodParameterTypes);
+        testAnnotationData = testAnnotation;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public <T> Class<?>[] getParameters() {
-        return parameters;
+    public TestAnnotationData getTestAnnotationData() {
+        return testAnnotationData;
     }
 }

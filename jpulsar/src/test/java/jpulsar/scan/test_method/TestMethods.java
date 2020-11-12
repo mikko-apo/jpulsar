@@ -5,12 +5,12 @@ import jpulsar.TestResource;
 
 public class TestMethods {
     @Test
-    void test() {
+    void test0() {
 
     }
 
     @Test
-    void test(TestMethodTestResource resource) {
+    void test1(TestMethodTestResource resource) {
 
     }
 

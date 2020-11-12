@@ -6,25 +6,21 @@ import jpulsar.ResourceHandler;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
-public class TestClass<T> {
+public class TestClass<T> extends Issues {
     List<ResourceHandler<?>> resourceHandlers = new ArrayList<>();
     final private Class<T> clazz;
-    final private List<TestMethod> testMethods = new ArrayList<>();
-    private List<String> issues = new ArrayList<>();
+    final private List<TestMethod> testMethods;
+    final private List<TestResourceMethod> testResources;
 
     public TestClass(Class<T> clazz) {
+        this(clazz, new ArrayList<>(), new ArrayList<>());
+    }
+
+    public TestClass(Class<T> clazz, List<TestMethod> testMethods, List<TestResourceMethod> testResources) {
         this.clazz = clazz;
-    }
-
-
-    public void addIssue(String... s) {
-        issues.add(Arrays.stream(s).collect(Collectors.joining(" ")));
-    }
-
-    public void addIssue(List<String> s) {
-        issues.add(String.join(" ", s));
+        this.testMethods = testMethods;
+        this.testResources = testResources;
     }
 
     public void addClassIssue(String... s) {
@@ -41,19 +37,23 @@ public class TestClass<T> {
         addIssue(list);
     }
 
-    public List<String> getIssues() {
-        return issues;
-    }
-
     public void addTestMethod(TestMethod testMethod) {
         testMethods.add(testMethod);
     }
 
-    public void addTestResource(MethodInfo methodInfo) {
-
+    public void addTestResource(TestResourceMethod methodInfo) {
+        testResources.add(methodInfo);
     }
 
     public List<TestMethod> getTestMethods() {
         return testMethods;
+    }
+
+    public List<TestResourceMethod> getTestResources() {
+        return testResources;
+    }
+
+    public Class<T> getClazz() {
+        return clazz;
     }
 }

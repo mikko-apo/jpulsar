@@ -5,12 +5,18 @@ import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ClassInfoList;
 import io.github.classgraph.MethodInfo;
 import io.github.classgraph.ScanResult;
-import jpulsar.TestFactory;
 import jpulsar.TestResource;
+import jpulsar.TestResourceScope;
 import jpulsar.Usecase;
+import jpulsar.scan.annotationdata.TestAnnotationData;
+import jpulsar.scan.annotationdata.TestResourceAnnotationData;
+import jpulsar.scan.simple_errors.AbstractClassTestMethod;
+import jpulsar.scan.simple_errors.BothTestAndTestResource;
 import jpulsar.scan.simple_errors.TooManyConstructors;
+import jpulsar.scan.test_method.TestMethodTestResource;
+import jpulsar.scan.test_method.TestMethodTestResource2;
 import jpulsar.scan.test_method.TestMethods;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -20,8 +26,8 @@ import java.util.stream.Stream;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static jpulsar.scan.Scanner.scanPackages;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static jpulsar.test.Util.jsonEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ScannerTest {
     public static <T> String getPackagePath(Class<T> clazz) {
@@ -39,13 +45,16 @@ public class ScannerTest {
     @Test
     public void simpleErrors() {
         TestScanResult result = scanPackages(getPackagePath(TooManyConstructors.class), Scanner::collectTestClasses);
-        assertEquals(asList("jpulsar.scan.simple_errors.AbstractClassTestMethod is abstract",
-                "jpulsar.scan.simple_errors.AbstractClassTestMethod.test() is abstract",
-                "jpulsar.scan.simple_errors.BothTestAndTestResource.test() has both @Test and @TestResource annotations. Can have only one.",
-                "jpulsar.scan.simple_errors.TooManyConstructors has 2 constructors. Should have 0 or 1 constructor"), result.getIssues());
-/*
-        Set<Class<?>> usecaseClasses = reflections.getTypesAnnotatedWith(Usecase.class);
-*/
+        TestClass<AbstractClassTestMethod> t1 = new TestClass<>(AbstractClassTestMethod.class, asList(), asList());
+        t1.getIssues().addAll(asList("jpulsar.scan.simple_errors.AbstractClassTestMethod is abstract",
+                "jpulsar.scan.simple_errors.AbstractClassTestMethod.test() is abstract"));
+        TestClass<BothTestAndTestResource> t2 = new TestClass<>(BothTestAndTestResource.class, asList(), asList());
+        t2.getIssues().add("jpulsar.scan.simple_errors.BothTestAndTestResource.test() has both @Test and @TestResource annotations. Can have only one.");
+        TestClass<TooManyConstructors> t3 = new TestClass<>(TooManyConstructors.class,
+                asList(new TestMethod("test", asList(), new TestAnnotationData(null, asList(), asList()))),
+                asList());
+        t3.getIssues().add("jpulsar.scan.simple_errors.TooManyConstructors has 2 constructors. Should have 0 or 1 constructor");
+        jsonEquals(asList(t1, t2, t3), result.testClasses);
     }
 
     @Test
@@ -54,36 +63,33 @@ public class ScannerTest {
         List<TestClass<?>> testClasses = result.testClasses;
         assertEquals(1, testClasses.size());
         TestClass<?> testClass = testClasses.get(0);
-        List<TestMethod> testMethods = testClass.getTestMethods();
-        assertEquals(3, testMethods.size());
-        boolean tested0 = false;
-        boolean tested1 = false;
-        boolean tested2 = false;
-        for (TestMethod t : testMethods) {
-            List<String> parameterNames = Arrays.stream(t.getParameters()).map(Class::getName).collect(toList());
-            switch (parameterNames.size()) {
-                case 0:
-                    tested0 = true;
-                    break;
-                case 1:
-                    tested1 = true;
-                    assertEquals(asList("jpulsar.scan.test_method.TestMethodTestResource"), parameterNames);
-                    break;
-                case 2:
-                    tested2 = true;
-                    assertEquals(asList("jpulsar.scan.test_method.TestMethodTestResource",
-                            "jpulsar.scan.test_method.TestMethodTestResource2"), parameterNames);
-                    break;
-                default:
-                    fail("There should be only 0, 1 and 2 parameters, but was: " + String.join(",", parameterNames));
-                    break;
-            }
-        }
-        assertEquals(asList(true, true, true), asList(tested0, tested1, tested2));
-/*
-        Set<Class<?>> usecaseClasses = reflections.getTypesAnnotatedWith(Usecase.class);
-*/
+        jsonEquals(asList(new TestClass<>(TestMethods.class,
+                asList(
+                        new TestMethod("test0",
+                                asList(),
+                                new TestAnnotationData(null, asList(), asList())),
+                        new TestMethod("test1",
+                                asList(TestMethodTestResource.class),
+                                new TestAnnotationData(null, asList(), asList())),
+                        new TestMethod("testWithInvalidTestResource",
+                                asList(TestMethodTestResource.class, TestMethodTestResource2.class),
+                                new TestAnnotationData(null, asList(), asList()))
+                ),
+                asList(new TestResourceMethod("testResource",
+                        asList(),
+                        new TestResourceAnnotationData(null,
+                                null,
+                                false,
+                                false,
+                                false,
+                                TestResourceScope.GLOBAL,
+                                asList()))))), result.testClasses);
     }
+
+    private List<String> getParameterTypeClassNames(List<Class<?>> methodParameterTypes) {
+        return methodParameterTypes.stream().map(Class::getName).collect(toList());
+    }
+
 
     @Test
     public void scanJPulsarAnnotations() {
@@ -95,7 +101,7 @@ public class ScannerTest {
                     "TicketSaleTest.sellSucceeds"
             ));
 
-            assertAnnotedMethods(scanResult, TestFactory.class, asList(
+            assertAnnotedMethods(scanResult, jpulsar.TestFactory.class, asList(
                     "ApiErrorsTest.createApiErrorTests"
             ));
             assertAnnotedMethods(scanResult, TestResource.class, asList(
