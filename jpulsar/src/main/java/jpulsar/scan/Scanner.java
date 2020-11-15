@@ -14,6 +14,9 @@ import jpulsar.TestResource;
 import jpulsar.TestResourceScope;
 import jpulsar.scan.annotationdata.TestAnnotationData;
 import jpulsar.scan.annotationdata.TestResourceAnnotationData;
+import jpulsar.scan.method.ConstructorInfo;
+import jpulsar.scan.method.TestMethod;
+import jpulsar.scan.method.TestResourceMethod;
 import jpulsar.util.NamedItem;
 
 import java.util.List;
@@ -57,7 +60,9 @@ public class Scanner {
                 classHasIssues = true;
                 testClass.addClassIssue("is abstract");
             }
-            if (constructors.size() > 1) {
+            if( constructors.size() == 1) {
+                testClass.setConstructorInfo(new ConstructorInfo(getParameterClassArray(scanResult, constructors.get(0))));
+            } else if (constructors.size() > 1) {
                 classHasIssues = true;
                 testClass.addClassIssue("has " + constructors.size() + " constructors. Should have 0 or 1 constructor");
             }

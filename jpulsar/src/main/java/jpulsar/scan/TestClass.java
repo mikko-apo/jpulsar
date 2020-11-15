@@ -2,6 +2,9 @@ package jpulsar.scan;
 
 import io.github.classgraph.MethodInfo;
 import jpulsar.ResourceHandler;
+import jpulsar.scan.method.ConstructorInfo;
+import jpulsar.scan.method.TestMethod;
+import jpulsar.scan.method.TestResourceMethod;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,15 +13,17 @@ import java.util.List;
 public class TestClass<T> extends Issues {
     List<ResourceHandler<?>> resourceHandlers = new ArrayList<>();
     final private Class<T> clazz;
+    private ConstructorInfo constructorInfo;
     final private List<TestMethod> testMethods;
     final private List<TestResourceMethod> testResources;
 
     public TestClass(Class<T> clazz) {
-        this(clazz, new ArrayList<>(), new ArrayList<>());
+        this(clazz, null, new ArrayList<>(), new ArrayList<>());
     }
 
-    public TestClass(Class<T> clazz, List<TestMethod> testMethods, List<TestResourceMethod> testResources) {
+    public TestClass(Class<T> clazz, ConstructorInfo constructorInfo, List<TestMethod> testMethods, List<TestResourceMethod> testResources) {
         this.clazz = clazz;
+        this.constructorInfo = constructorInfo;
         this.testMethods = testMethods;
         this.testResources = testResources;
     }
@@ -35,6 +40,14 @@ public class TestClass<T> extends Issues {
         list.add(clazz.getName() + "." + method.getName() + "()");
         list.addAll(Arrays.asList(s));
         addIssue(list);
+    }
+
+    public ConstructorInfo getConstructorInfo() {
+        return constructorInfo;
+    }
+
+    public void setConstructorInfo(ConstructorInfo constructorInfo) {
+        this.constructorInfo = constructorInfo;
     }
 
     public void addTestMethod(TestMethod testMethod) {

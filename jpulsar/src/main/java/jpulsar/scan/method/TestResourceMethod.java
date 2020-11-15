@@ -1,10 +1,10 @@
-package jpulsar.scan;
+package jpulsar.scan.method;
 
 import jpulsar.scan.annotationdata.TestResourceAnnotationData;
 
 import java.util.List;
 
-class TestResourceMethod extends TestMethodBase {
+public class TestResourceMethod extends TestMethodBase {
     private final TestResourceAnnotationData testResourceAnnotation;
 
     public TestResourceMethod(

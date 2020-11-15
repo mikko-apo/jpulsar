@@ -1,4 +1,4 @@
-package jpulsar.scan;
+package jpulsar.scan.method;
 
 import jpulsar.scan.annotationdata.TestAnnotationData;
 
