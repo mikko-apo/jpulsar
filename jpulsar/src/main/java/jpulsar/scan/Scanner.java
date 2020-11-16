@@ -39,9 +39,9 @@ public class Scanner {
                              .acceptPackages(packagePath)   // Scan com.xyz and subpackages
                              .disableJarScanning()
 //                             .disableDirScanning()
-//                             .disableModuleScanning()
+                             .disableModuleScanning()
                              .disableNestedJarScanning()
-                             .ignoreParentClassLoaders()
+//                             .ignoreParentClassLoaders()
 //                             .overrideClassLoaders(new URLClassLoaderHandler())
                              .scan()) {
 
