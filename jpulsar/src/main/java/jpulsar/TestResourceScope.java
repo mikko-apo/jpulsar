@@ -1,5 +1,5 @@
 package jpulsar;
 
-enum TestResourceScope {
+public enum TestResourceScope {
     GLOBAL, CLASS
 }
