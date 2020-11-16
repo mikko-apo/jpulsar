@@ -48,7 +48,7 @@ public abstract class TestLifecycleOperations<R, RB> {
         afters.add(new LifeCycleOperation<>(handler));
         return getThis();
     }
-    
+
     public RB after(Runnable runner) {
         afters.add(new LifeCycleOperation<>(runner));
         return getThis();
@@ -58,7 +58,7 @@ public abstract class TestLifecycleOperations<R, RB> {
         afterAlls.add(new LifeCycleOperation<>(handler));
         return getThis();
     }
-    
+
     public RB afterAll(Runnable runner) {
         afterAlls.add(new LifeCycleOperation<>(runner));
         return getThis();

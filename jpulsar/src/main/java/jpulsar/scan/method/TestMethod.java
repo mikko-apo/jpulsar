@@ -7,8 +7,8 @@ import java.util.List;
 public class TestMethod extends TestMethodBase {
     private TestAnnotationData testAnnotationData;
 
-    public TestMethod(String methodName, List<Class<?>> methodParameterTypes, TestAnnotationData testAnnotation) {
-        super(methodName, methodParameterTypes);
+    public TestMethod(String methodName, int modifiers, List<Class<?>> methodParameterTypes, TestAnnotationData testAnnotation) {
+        super(methodName, modifiers, methodParameterTypes);
         testAnnotationData = testAnnotation;
     }
 

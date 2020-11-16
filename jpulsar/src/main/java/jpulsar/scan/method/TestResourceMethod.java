@@ -9,9 +9,9 @@ public class TestResourceMethod extends TestMethodBase {
 
     public TestResourceMethod(
             String methodName,
-            List<Class<?>> parameters,
+            int modifiers, List<Class<?>> parameters,
             TestResourceAnnotationData testResourceAnnotation) {
-        super(methodName, parameters);
+        super(methodName, modifiers, parameters);
         this.testResourceAnnotation = testResourceAnnotation;
     }
 

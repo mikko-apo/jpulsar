@@ -15,17 +15,20 @@ import jpulsar.TestResourceScope;
 import jpulsar.scan.annotationdata.TestAnnotationData;
 import jpulsar.scan.annotationdata.TestResourceAnnotationData;
 import jpulsar.scan.method.ConstructorInfo;
+import jpulsar.scan.method.ModifierHelper;
 import jpulsar.scan.method.TestMethod;
+import jpulsar.scan.method.TestMethodBase;
 import jpulsar.scan.method.TestResourceMethod;
 import jpulsar.util.NamedItem;
 
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
+import static jpulsar.scan.ScanErrors.invalidAttributes;
+import static jpulsar.util.Strings.mapJoin;
 
 public class Scanner {
     static public <R> R scanPackages(String packagePath, Function<ScanResult, R> processor) {
@@ -55,43 +58,43 @@ public class Scanner {
             TestClass<?> testClass = (TestClass<?>) new TestClass(clazz);
             testScanResult.addTestClass(testClass);
             MethodInfoList constructors = classInfo.getConstructorInfo();
-            boolean classHasIssues = false;
-            if (classInfo.isAbstract()) {
-                classHasIssues = true;
-                testClass.addClassIssue("is abstract");
-            }
-            if( constructors.size() == 1) {
-                testClass.setConstructorInfo(new ConstructorInfo(getParameterClassArray(scanResult, constructors.get(0))));
+            ensureCorrectModifiers(testClass, clazz.getModifiers());
+            if (constructors.size() == 1) {
+                MethodInfo methodInfo = constructors.get(0);
+                testClass.setConstructorInfo(new ConstructorInfo(methodInfo.getModifiers(), getParameterClassArray(scanResult, methodInfo)));
             } else if (constructors.size() > 1) {
-                classHasIssues = true;
                 testClass.addClassIssue("has " + constructors.size() + " constructors. Should have 0 or 1 constructor");
             }
-            for (MethodInfo methodInfo : classInfo.getMethodInfo()) {
-                AnnotationInfo testResourceAnnotation = methodInfo.getAnnotationInfo(TestResource.class.getName());
-                boolean isTestResource = testResourceAnnotation != null;
-                AnnotationInfo testAnnotation = methodInfo.getAnnotationInfo(Test.class.getName());
-                boolean isTest = testAnnotation != null;
-                boolean methodHasIssues = false;
-                if (isTestResource && isTest) {
-                    classHasIssues = methodHasIssues = true;
-                    testClass.addMethodIssue(methodInfo, "has both @Test and @TestResource annotations. Can have only one.");
-                }
-                if (!methodInfo.hasBody()) {
-                    classHasIssues = methodHasIssues = true;
-                    testClass.addMethodIssue(methodInfo, "is abstract");
-                }
-                if (!methodHasIssues) {
-                    if (isTest) {
-                        testClass.addTestMethod(createTestMethod(scanResult, methodInfo, testAnnotation));
-                    }
-                    if (isTestResource) {
-                        testClass.addTestResource(createTestResource(scanResult, methodInfo, testResourceAnnotation));
-                    }
-                }
-            }
+            MethodInfoList methodInfoList = classInfo.getMethodInfo();
+            processMethods(scanResult, methodInfoList, testClass);
             return testClass;
         }).collect(toList());
         return testScanResult;
+    }
+
+    private static void processMethods(ScanResult scanResult, MethodInfoList methodInfoList, TestClass<?> testClass) {
+        for (MethodInfo methodInfo : methodInfoList) {
+            AnnotationInfo testResourceAnnotation = methodInfo.getAnnotationInfo(TestResource.class.getName());
+            boolean isTestResource = testResourceAnnotation != null;
+            AnnotationInfo testAnnotation = methodInfo.getAnnotationInfo(Test.class.getName());
+            boolean isTest = testAnnotation != null;
+            if (isTest || isTestResource) {
+                TestMethodBase method;
+                if (isTest) {
+                    TestMethod testMethod = createTestMethod(scanResult, methodInfo, testAnnotation);
+                    testClass.addTestMethod(testMethod);
+                    method = testMethod;
+                } else {
+                    TestResourceMethod testResource = createTestResource(scanResult, methodInfo, testResourceAnnotation);
+                    testClass.addTestResource(testResource);
+                    method = testResource;
+                }
+                ensureCorrectModifiers(method, methodInfo.getModifiers());
+                if (isTestResource && isTest) {
+                    method.addIssue("has both @Test and @TestResource annotations. Can have only one.");
+                }
+            }
+        }
     }
 
     static private List<Class<?>> getParameterClassArray(ScanResult scanResult, MethodInfo methodInfo) {
@@ -111,10 +114,21 @@ public class Scanner {
         String[] tags = (String[]) annotationParameterValues.getValue("tags");
         return new TestMethod(
                 methodInfo.getName(),
+                methodInfo.getModifiers(),
                 getParameterClassArray(scanResult, methodInfo),
                 new TestAnnotationData(name,
                         asList(usecases),
                         asList(tags)));
+    }
+
+    private static void ensureCorrectModifiers(Issues target, int modifiers) {
+        List<ModifierHelper> foundInvalidModifiers = ModifierHelper.hasModifiers(modifiers,
+                ModifierHelper.PRIVATE,
+                ModifierHelper.PROTECTED,
+                ModifierHelper.ABSTRACT);
+        if (foundInvalidModifiers.size() > 0) {
+            target.addIssue(invalidAttributes(foundInvalidModifiers));
+        }
     }
 
     static private TestResourceMethod createTestResource(ScanResult scanResult, MethodInfo methodInfo, AnnotationInfo testResourceAnnotation) {
@@ -128,6 +142,7 @@ public class Scanner {
         String[] usecases = (String[]) annotationParameterValues.getValue("usecases");
         TestResourceMethod testResourceMethod = new TestResourceMethod(
                 methodInfo.getName(),
+                methodInfo.getModifiers(),
                 getParameterClassArray(scanResult, methodInfo),
                 new TestResourceAnnotationData(name,
                         max,
@@ -142,8 +157,7 @@ public class Scanner {
                 new NamedItem<>("fixed", fixed)
         ).filter(booleanNamedItem -> booleanNamedItem.data).collect(toList());
         if (enabledFeatures.size() > 0) {
-            testResourceMethod.addIssue("Can enable only one feature. Now has",
-                    enabledFeatures.stream().map(booleanNamedItem -> booleanNamedItem.name).collect(Collectors.joining(", ")));
+            testResourceMethod.addIssue("Can enable only one feature. Now has", mapJoin(enabledFeatures, booleanNamedItem -> booleanNamedItem.name, ", "));
         }
         return testResourceMethod;
     }

@@ -13,12 +13,12 @@ import jpulsar.scan.resources.TestResource8;
 
 public class VisibilityTest {
     static public TestResource1 testResource1;
-    static TestResource2 testResource2;
     static protected TestResource3 testResource3;
+    static TestResource2 testResource2;
     static private TestResource4 testResource4;
     public TestResource5 testResource5;
-    TestResource6 testResource6;
     protected TestResource7 testResource7;
+    TestResource6 testResource6;
     private TestResource8 testResource8;
 
     public VisibilityTest(TestResource1 tr1) {
@@ -55,26 +55,6 @@ public class VisibilityTest {
         return new TestResource4();
     }
 
-    @TestResource
-    public TestResource5 tr5() {
-        return new TestResource5();
-    }
-
-    @TestResource
-    TestResource6 tr6() {
-        return new TestResource6();
-    }
-
-    @TestResource
-    protected TestResource7 tr7() {
-        return new TestResource7();
-    }
-
-    @TestResource
-    private TestResource8 tr8() {
-        return new TestResource8();
-    }
-
     @Test
     static public void test1() {
 
@@ -93,6 +73,26 @@ public class VisibilityTest {
     @Test
     static private void test4() {
 
+    }
+
+    @TestResource
+    public TestResource5 tr5() {
+        return new TestResource5();
+    }
+
+    @TestResource
+    TestResource6 tr6() {
+        return new TestResource6();
+    }
+
+    @TestResource
+    protected TestResource7 tr7() {
+        return new TestResource7();
+    }
+
+    @TestResource
+    private TestResource8 tr8() {
+        return new TestResource8();
     }
 
     @Test

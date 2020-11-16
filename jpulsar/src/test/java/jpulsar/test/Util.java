@@ -8,13 +8,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
+import static jpulsar.util.Strings.join;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class Util {
+    static public ObjectMapper sortedJackson = initializeJackson();
+
     public static <T> T removeOne(ArrayList<T> list, Predicate<T> predicate) {
         ArrayList<Integer> foundIndexes = new ArrayList<>();
         ArrayList<T> foundItems = new ArrayList<>();
@@ -33,13 +34,7 @@ public class Util {
         return foundItems.get(0);
     }
 
-    public static <T> String join(Collection<T> collection, String delimiter) {
-        return collection.stream()
-                .map(Object::toString)
-                .collect(Collectors.joining(delimiter));
-    }
-
-    public static <A, B> void  jsonEquals(A a, B b) {
+    public static <A, B> void jsonEquals(A a, B b) {
         assertEquals(jsonPretty(a), jsonPretty(b));
     }
 
@@ -60,6 +55,4 @@ public class Util {
         mapper.enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS);
         return mapper;
     }
-
-    static public ObjectMapper sortedJackson = initializeJackson();
 }

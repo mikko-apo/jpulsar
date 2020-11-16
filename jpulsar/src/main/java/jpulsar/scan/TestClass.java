@@ -11,11 +11,11 @@ import java.util.Arrays;
 import java.util.List;
 
 public class TestClass<T> extends Issues {
-    List<ResourceHandler<?>> resourceHandlers = new ArrayList<>();
     final private Class<T> clazz;
-    private ConstructorInfo constructorInfo;
     final private List<TestMethod> testMethods;
     final private List<TestResourceMethod> testResources;
+    List<ResourceHandler<?>> resourceHandlers = new ArrayList<>();
+    private ConstructorInfo constructorInfo;
 
     public TestClass(Class<T> clazz) {
         this(clazz, null, new ArrayList<>(), new ArrayList<>());

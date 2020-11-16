@@ -38,6 +38,7 @@ public class TestResources {
     /**
      * There can be only three servers and tests using the server running at the same time. This is limited by the number of databases.
      * Database is automatically cleared before any server test, because dbClient clears it.
+     *
      * @return
      */
     @TestResource(fixed = true)

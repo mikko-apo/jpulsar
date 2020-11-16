@@ -10,6 +10,7 @@ import jpulsar.Usecase;
 import jpulsar.scan.annotationdata.TestAnnotationData;
 import jpulsar.scan.annotationdata.TestResourceAnnotationData;
 import jpulsar.scan.method.ConstructorInfo;
+import jpulsar.scan.method.ModifierHelper;
 import jpulsar.scan.method.TestMethod;
 import jpulsar.scan.method.TestResourceMethod;
 import jpulsar.scan.resources.TestResource1;
@@ -29,11 +30,15 @@ import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
+import static jpulsar.scan.ScanErrors.invalidAttributes;
 import static jpulsar.scan.Scanner.scanPackages;
 import static jpulsar.test.Util.jsonEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ScannerTest {
+
+    private final TestAnnotationData emptyTestAnnotation = new TestAnnotationData(null, asList(), asList());
+
     public static <T> String getPackagePath(Class<T> clazz) {
         String[] full = clazz.getName().split("\\.");
         String[] packagePath = Arrays.copyOf(full, full.length - 1);
@@ -49,13 +54,20 @@ public class ScannerTest {
     @Test
     public void simpleErrors() {
         TestScanResult result = scanPackages(getPackagePath(TooManyConstructors.class), Scanner::collectTestClasses);
-        TestClass<AbstractClassTestMethod> t1 = new TestClass<>(AbstractClassTestMethod.class, new ConstructorInfo(asList()), asList(), asList());
-        t1.getIssues().addAll(asList("jpulsar.scan.simple_errors.AbstractClassTestMethod is abstract",
-                "jpulsar.scan.simple_errors.AbstractClassTestMethod.test() is abstract"));
-        TestClass<BothTestAndTestResource> t2 = new TestClass<>(BothTestAndTestResource.class, new ConstructorInfo(asList()), asList(), asList());
-        t2.getIssues().add("jpulsar.scan.simple_errors.BothTestAndTestResource.test() has both @Test and @TestResource annotations. Can have only one.");
+        TestMethod abstractTestMethod = new TestMethod("test", 1024, asList(), emptyTestAnnotation);
+        abstractTestMethod.addIssue(invalidAttributes(asList(ModifierHelper.ABSTRACT)));
+        TestClass<AbstractClassTestMethod> t1 = new TestClass<>(AbstractClassTestMethod.class,
+                new ConstructorInfo(1, asList()),
+                asList(abstractTestMethod),
+                asList());
+        t1.getIssues().add(invalidAttributes(asList(ModifierHelper.ABSTRACT)));
+
+        TestMethod twoAnnotationsTestMethod = new TestMethod("test", 0, asList(), emptyTestAnnotation);
+        twoAnnotationsTestMethod.addIssue("has both @Test and @TestResource annotations. Can have only one.");
+        TestClass<BothTestAndTestResource> t2 = new TestClass<>(BothTestAndTestResource.class, new ConstructorInfo(1, asList()), asList(twoAnnotationsTestMethod), asList());
+
         TestClass<TooManyConstructors> t3 = new TestClass<>(TooManyConstructors.class,
-                null, asList(new TestMethod("test", asList(), new TestAnnotationData(null, asList(), asList()))),
+                null, asList(new TestMethod("test", 0, asList(), emptyTestAnnotation)),
                 asList());
         t3.getIssues().add("jpulsar.scan.simple_errors.TooManyConstructors has 2 constructors. Should have 0 or 1 constructor");
         jsonEquals(asList(t1, t2, t3), result.testClasses);
@@ -65,20 +77,20 @@ public class ScannerTest {
     public void testMethodInitialization() {
         TestScanResult result = scanPackages(getPackagePath(TestMethods.class), Scanner::collectTestClasses);
         jsonEquals(asList(new TestClass<>(TestMethods.class,
-                new ConstructorInfo(asList()),
+                new ConstructorInfo(1, asList()),
                 asList(
                         new TestMethod("test0",
-                                asList(),
-                                new TestAnnotationData(null, asList(), asList())),
+                                0, asList(),
+                                emptyTestAnnotation),
                         new TestMethod("test1",
-                                asList(TestResource1.class),
-                                new TestAnnotationData(null, asList(), asList())),
+                                0, asList(TestResource1.class),
+                                emptyTestAnnotation),
                         new TestMethod("testWithInvalidTestResource",
-                                asList(TestResource1.class, TestResource2.class),
-                                new TestAnnotationData(null, asList(), asList()))
+                                0, asList(TestResource1.class, TestResource2.class),
+                                emptyTestAnnotation)
                 ),
                 asList(new TestResourceMethod("testResource",
-                        asList(),
+                        0, asList(),
                         new TestResourceAnnotationData(null,
                                 null,
                                 false,
@@ -88,20 +100,37 @@ public class ScannerTest {
                                 asList()))))), result.testClasses);
     }
 
+    private <T extends Issues> T addPrivateProtectedIssue(int index, T target) {
+        if (asList(4, 8).contains(index)) {
+            target.addIssue(invalidAttributes(asList(ModifierHelper.PRIVATE)));
+        }
+        if (asList(3, 7).contains(index)) {
+            target.addIssue(invalidAttributes(asList(ModifierHelper.PROTECTED)));
+        }
+        return target;
+    }
+
     @Test
     public void testVisibility() {
         TestScanResult result = scanPackages(getPackagePath(VisibilityTest.class), Scanner::collectTestClasses);
+        List<Integer> modifiers = asList(0, 9, 8, 12, 10, 1, 0, 4, 2);
         TestClass<VisibilityTest> visibilityTestTestClass = new TestClass<>(VisibilityTest.class,
                 null,
-                IntStream.range(1, 9).mapToObj(i -> new TestMethod("test" + i,
-                        asList(),
-                        new TestAnnotationData(null, asList(), asList()))
+                IntStream.range(1, 9).mapToObj(i -> addPrivateProtectedIssue(i, new TestMethod("test" + i,
+                        modifiers.get(i), asList(),
+                        emptyTestAnnotation))
                 ).collect(toList()),
-                IntStream.range(1, 9).mapToObj(i -> new TestResourceMethod("tr" + i,
-                        asList(),
-                        new TestResourceAnnotationData(null, 0, false, false, false, TestResourceScope.GLOBAL, asList()))
+                IntStream.range(1, 9).mapToObj(i -> addPrivateProtectedIssue(i, new TestResourceMethod("tr" + i,
+                        modifiers.get(i), asList(),
+                        new TestResourceAnnotationData(null,
+                                0,
+                                false,
+                                false,
+                                false,
+                                TestResourceScope.GLOBAL,
+                                asList())))
                 ).collect(toList())
-                );
+        );
         visibilityTestTestClass.getIssues().add(VisibilityTest.class.getName() + " has 4 constructors. Should have 0 or 1 constructor");
         jsonEquals(asList(visibilityTestTestClass), result.testClasses);
     }
