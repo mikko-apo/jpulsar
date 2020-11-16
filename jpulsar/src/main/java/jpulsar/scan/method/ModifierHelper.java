@@ -1,10 +1,9 @@
 package jpulsar.scan.method;
 
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
 import java.util.List;
 
-import static java.util.stream.Collectors.toList;
+import static jpulsar.util.Streams.filter;
 
 public enum ModifierHelper {
     PUBLIC("public"),
@@ -20,7 +19,7 @@ public enum ModifierHelper {
     }
 
     public static List<ModifierHelper> hasModifiers(int modifiers, ModifierHelper... visibility) {
-        return Arrays.stream(visibility).filter(modifierHelper -> hasModifier(modifiers, modifierHelper)).collect(toList());
+        return filter(visibility, modifierHelper -> hasModifier(modifiers, modifierHelper));
     }
 
     private static boolean hasModifier(int modifiers, ModifierHelper modifierHelper) {

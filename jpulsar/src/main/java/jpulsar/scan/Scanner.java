@@ -4,6 +4,7 @@ import io.github.classgraph.AnnotationEnumValue;
 import io.github.classgraph.AnnotationInfo;
 import io.github.classgraph.AnnotationParameterValueList;
 import io.github.classgraph.ClassGraph;
+import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ClassInfoList;
 import io.github.classgraph.MethodInfo;
 import io.github.classgraph.MethodInfoList;
@@ -23,11 +24,10 @@ import jpulsar.util.NamedItem;
 
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
-import static java.util.stream.Collectors.toList;
 import static jpulsar.scan.ScanErrors.invalidAttributes;
+import static jpulsar.util.Streams.filter;
 import static jpulsar.util.Strings.mapJoin;
 
 public class Scanner {
@@ -53,7 +53,7 @@ public class Scanner {
     static public TestScanResult collectTestClasses(ScanResult scanResult) {
         ClassInfoList classesWithTests = scanResult.getClassesWithMethodAnnotation(jpulsar.Test.class.getName());
         TestScanResult testScanResult = new TestScanResult();
-        classesWithTests.stream().map(classInfo -> {
+        for(ClassInfo classInfo : classesWithTests) {
             Class<?> clazz = classInfo.loadClass();
             TestClass<?> testClass = (TestClass<?>) new TestClass(clazz);
             testScanResult.addTestClass(testClass);
@@ -67,8 +67,7 @@ public class Scanner {
             }
             MethodInfoList methodInfoList = classInfo.getMethodInfo();
             processMethods(scanResult, methodInfoList, testClass);
-            return testClass;
-        }).collect(toList());
+        }
         return testScanResult;
     }
 
@@ -152,10 +151,10 @@ public class Scanner {
                         scope,
                         asList(usecases)));
         boolean maxDefined = TestResourceAnnotationData.MaxDefault != max;
-        List<NamedItem<Boolean>> enabledFeatures = Stream.of(new NamedItem<>("max", maxDefined),
+        List<NamedItem<Boolean>> enabledFeatures = filter(asList(new NamedItem<>("max", maxDefined),
                 new NamedItem<>("shared", shared),
                 new NamedItem<>("fixed", fixed)
-        ).filter(booleanNamedItem -> booleanNamedItem.data).collect(toList());
+        ), booleanNamedItem -> booleanNamedItem.data);
         if (enabledFeatures.size() > 0) {
             testResourceMethod.addIssue("Can enable only one feature. Now has", mapJoin(enabledFeatures, booleanNamedItem -> booleanNamedItem.name, ", "));
         }
