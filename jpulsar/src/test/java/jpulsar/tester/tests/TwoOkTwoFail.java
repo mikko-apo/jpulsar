@@ -2,6 +2,7 @@ package jpulsar.tester.tests;
 
 import jpulsar.Test;
 
+import static jpulsar.util.Threads.sleep;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TwoOkTwoFail {
@@ -11,6 +12,7 @@ public class TwoOkTwoFail {
     public void ok1() {
         counter++;
         assertEquals(1, counter);
+        sleep(10);
     }
 
     @Test

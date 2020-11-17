@@ -7,7 +7,7 @@ import example.main.HttpClient;
 import jpulsar.Test;
 import jpulsar.Usecase;
 
-import static jpulsar.TestStep.testStep;
+import static jpulsar.step.TestStepCollector.testStep;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Usecase(usecases = {UseCases.TicketSale, UseCases.ErrorScenarios})

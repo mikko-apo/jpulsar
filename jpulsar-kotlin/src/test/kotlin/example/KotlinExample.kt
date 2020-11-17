@@ -6,8 +6,8 @@ import jpulsar.ResourceInfo
 import jpulsar.Test
 import jpulsar.TestFactory
 import jpulsar.TestResource
-import jpulsar.TestStep.testStep
 import jpulsar.Usecase
+import jpulsar.step.TestStepCollector.testStep
 import kotlin.test.assertEquals
 
 /**
