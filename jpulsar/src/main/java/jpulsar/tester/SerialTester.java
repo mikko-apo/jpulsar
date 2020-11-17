@@ -17,21 +17,21 @@ public class SerialTester {
     public static TestRunResult runTests(TestScanResult scanInfo) {
 
         return new TestRunResult(map(scanInfo.getTestClasses(),
-                testClass -> new TestClassResult(testClass.getClazz(),
+                testClass -> new TestClassResult<>(testClass.getClazz(),
                         map(testClass.getTestMethods(),
                                 testMethod -> runTestMethod(testClass, testMethod)))
         ));
     }
 
-    private static TestMethodResult runTestMethod(TestClass<?> testClass, TestMethod testMethod) {
+    private static <T> TestMethodResult runTestMethod(TestClass<T> testClass, TestMethod testMethod) {
         try {
             ConstructorInfo constructorInfo = testClass.getConstructorInfo();
-            Class<?>[] constructorParameters = (Class<?>[]) constructorInfo.getMethodParameterTypes().toArray();
-            Constructor<Class<?>> testClassConstructor = (Constructor<Class<?>>) testClass
+            Class<?>[] constructorParameters = constructorInfo.getMethodParameterTypes();
+            Constructor<T> testClassConstructor = testClass
                     .getClazz()
                     .getConstructor(constructorParameters);
             Object testClassInstance = testClassConstructor.newInstance();
-            Class<?>[] parameterTypes = (Class<?>[]) testMethod.getMethodParameterTypes().toArray();
+            Class<?>[] parameterTypes = testMethod.getMethodParameterTypes();
             Method method = testClass.getClazz().getMethod(testMethod.getMethodName(), parameterTypes);
             Throwable exception = null;
             long durationMs;

@@ -8,9 +8,9 @@ import java.util.List;
 public class TestMethodBase extends Issues {
     private String methodName;
     private int modifiers;
-    private List<Class<?>> methodParameterTypes;
+    private Class<?>[] methodParameterTypes;
 
-    public TestMethodBase(String methodName, int modifiers, List<Class<?>> methodParameterTypes) {
+    public TestMethodBase(String methodName, int modifiers, Class<?>[] methodParameterTypes) {
         this.methodName = methodName;
         this.modifiers = modifiers;
         this.methodParameterTypes = methodParameterTypes;
@@ -20,7 +20,7 @@ public class TestMethodBase extends Issues {
         return methodName;
     }
 
-    public List<Class<?>> getMethodParameterTypes() {
+    public Class<?>[] getMethodParameterTypes() {
         return methodParameterTypes;
     }
 

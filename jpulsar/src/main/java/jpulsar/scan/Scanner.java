@@ -55,7 +55,7 @@ public class Scanner {
         TestScanResult testScanResult = new TestScanResult();
         for(ClassInfo classInfo : classesWithTests) {
             Class<?> clazz = classInfo.loadClass();
-            TestClass<?> testClass = (TestClass<?>) new TestClass(clazz);
+            TestClass<?> testClass = new TestClass<>(clazz);
             testScanResult.addTestClass(testClass);
             MethodInfoList constructors = classInfo.getConstructorInfo();
             ensureCorrectModifiers(testClass, clazz.getModifiers());
@@ -96,14 +96,14 @@ public class Scanner {
         }
     }
 
-    static private List<Class<?>> getParameterClassArray(ScanResult scanResult, MethodInfo methodInfo) {
+    static private Class<?>[] getParameterClassArray(ScanResult scanResult, MethodInfo methodInfo) {
         MethodParameterInfo[] parameterInfos = methodInfo.getParameterInfo();
         Class<?>[] arr = new Class<?>[parameterInfos.length];
         for (int i = 0; i < parameterInfos.length; i++) {
             MethodParameterInfo parameterInfo = parameterInfos[i];
             arr[i] = scanResult.loadClass(parameterInfo.getTypeDescriptor().toString(), false);
         }
-        return asList(arr);
+        return arr;
     }
 
     static private TestMethod createTestMethod(ScanResult scanResult, MethodInfo methodInfo, AnnotationInfo testAnnotation) {
