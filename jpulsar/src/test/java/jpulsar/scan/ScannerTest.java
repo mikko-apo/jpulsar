@@ -53,7 +53,7 @@ public class ScannerTest {
     }
 
     @Test
-    public void simpleErrors() {
+    void simpleErrors() {
         TestScanResult result = scanPackages(getPackagePath(TooManyConstructors.class), Scanner::collectTestClasses);
         TestMethod abstractTestMethod = new TestMethod("test",
                 1024,
@@ -88,7 +88,7 @@ public class ScannerTest {
     }
 
     @Test
-    public void testMethodInitialization() {
+    void testMethodInitialization() {
         TestScanResult result = scanPackages(getPackagePath(TestMethods.class), Scanner::collectTestClasses);
         jsonEquals(asList(new TestClass<>(TestMethods.class,
                 new ConstructorInfo(1, emptyParameterTypes),
@@ -129,7 +129,7 @@ public class ScannerTest {
     }
 
     @Test
-    public void testVisibility() {
+    void testVisibility() {
         TestScanResult result = scanPackages(getPackagePath(VisibilityTest.class), Scanner::collectTestClasses);
         List<Integer> modifiers = asList(0, 9, 8, 12, 10, 1, 0, 4, 2);
         TestClass<VisibilityTest> visibilityTestTestClass = new TestClass<>(VisibilityTest.class,
@@ -160,7 +160,7 @@ public class ScannerTest {
     }
 
     @Test
-    public void scanJPulsarAnnotations() {
+    void scanJPulsarAnnotations() {
         scanPackages(getPackagePath(TestResources.class), scanResult -> {
             // Perform the scan and return a ScanResult
             assertAnnotedMethods(scanResult, jpulsar.Test.class, asList(
