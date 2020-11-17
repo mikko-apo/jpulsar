@@ -8,8 +8,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class TestScanResult {
-    List<TestClass<?>> testClasses = new ArrayList<>();
-    List<ResourceHandler<?>> globalResourceHandlers = new ArrayList<>();
+    private List<TestClass<?>> testClasses = new ArrayList<>();
+    private List<ResourceHandler<?>> globalResourceHandlers = new ArrayList<>();
 
     public List<String> getIssues() {
         Stream<String> stream = testClasses.stream().flatMap(testClass -> testClass.getIssues().stream());
@@ -18,5 +18,13 @@ public class TestScanResult {
 
     public <T> void addTestClass(TestClass<T> testClass) {
         testClasses.add(testClass);
+    }
+
+    public List<TestClass<?>> getTestClasses() {
+        return testClasses;
+    }
+
+    public List<ResourceHandler<?>> getGlobalResourceHandlers() {
+        return globalResourceHandlers;
     }
 }

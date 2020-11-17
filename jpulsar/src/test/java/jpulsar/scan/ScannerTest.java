@@ -32,7 +32,7 @@ import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static jpulsar.scan.ScanErrors.invalidAttributes;
 import static jpulsar.scan.Scanner.scanPackages;
-import static jpulsar.test.Util.jsonEquals;
+import static jpulsar.util.Util.jsonEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ScannerTest {
@@ -70,7 +70,7 @@ public class ScannerTest {
                 null, asList(new TestMethod("test", 0, asList(), emptyTestAnnotation)),
                 asList());
         t3.getIssues().add("jpulsar.scan.simple_errors.TooManyConstructors has 2 constructors. Should have 0 or 1 constructor");
-        jsonEquals(asList(t1, t2, t3), result.testClasses);
+        jsonEquals(asList(t1, t2, t3), result.getTestClasses());
     }
 
     @Test
@@ -97,7 +97,7 @@ public class ScannerTest {
                                 false,
                                 false,
                                 TestResourceScope.GLOBAL,
-                                asList()))))), result.testClasses);
+                                asList()))))), result.getTestClasses());
     }
 
     private <T extends Issues> T addPrivateProtectedIssue(int index, T target) {
@@ -132,7 +132,7 @@ public class ScannerTest {
                 ).collect(toList())
         );
         visibilityTestTestClass.getIssues().add(VisibilityTest.class.getName() + " has 4 constructors. Should have 0 or 1 constructor");
-        jsonEquals(asList(visibilityTestTestClass), result.testClasses);
+        jsonEquals(asList(visibilityTestTestClass), result.getTestClasses());
     }
 
     private List<String> getParameterTypeClassNames(List<Class<?>> methodParameterTypes) {

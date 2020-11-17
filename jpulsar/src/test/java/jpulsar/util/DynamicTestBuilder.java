@@ -1,6 +1,5 @@
-package jpulsar.test;
+package jpulsar.util;
 
-import jpulsar.util.NamedItem;
 import org.junit.jupiter.api.DynamicTest;
 
 import java.util.ArrayList;
@@ -9,7 +8,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.stream.Stream;
 
-import static jpulsar.test.Util.removeOne;
+import static jpulsar.util.Util.removeOne;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DynamicTestBuilder<T> {

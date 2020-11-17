@@ -5,12 +5,12 @@
 * Create test plan
   * Scan @TestResource and @Test method annotations
   * Scan class annotations
-  * Resolve TestResource requirements
-    * https://stackoverflow.com/questions/1901164/get-type-of-a-generic-parameter-in-java-with-reflection
-    * @TestResource generics for Supplier<TestResource>
-  * Validate errors in configuration
-  * Create plan
-* Test running in serial
+* Test running in serial without test resources
+* Resolve TestResource requirements
+  * https://stackoverflow.com/questions/1901164/get-type-of-a-generic-parameter-in-java-with-reflection
+  * @TestResource generics for Supplier<TestResource>
+* Validate errors in configuration
+  Test running in serial with test resources
 * Generate runtime log to stdout
 
 # v0.2
