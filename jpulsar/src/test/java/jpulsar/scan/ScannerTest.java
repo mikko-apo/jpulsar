@@ -10,28 +10,38 @@ import jpulsar.Usecase;
 import jpulsar.scan.annotationdata.TestAnnotationData;
 import jpulsar.scan.annotationdata.TestResourceAnnotationData;
 import jpulsar.scan.method.ConstructorInfo;
+import jpulsar.scan.method.MethodReturnType;
 import jpulsar.scan.method.ModifierHelper;
 import jpulsar.scan.method.TestMethod;
 import jpulsar.scan.method.TestResourceMethod;
 import jpulsar.scan.resources.TestResource1;
 import jpulsar.scan.resources.TestResource2;
+import jpulsar.scan.resources.TestResource3;
+import jpulsar.scan.resources.TestResource4;
+import jpulsar.scan.resources.TestResource5;
+import jpulsar.scan.resources.TestResource6;
+import jpulsar.scan.resources.TestResource7;
+import jpulsar.scan.resources.TestResource8;
 import jpulsar.scan.simple_errors.AbstractClassTestMethod;
 import jpulsar.scan.simple_errors.BothTestAndTestResource;
 import jpulsar.scan.simple_errors.TooManyConstructors;
 import jpulsar.scan.test_method.TestMethods;
 import jpulsar.scan.visibility.VisibilityTest;
+import jpulsar.util.Counter;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
-import static java.util.stream.Collectors.toList;
 import static jpulsar.scan.ScanErrors.invalidAttributes;
 import static jpulsar.scan.Scanner.scanPackages;
+import static jpulsar.util.Streams.map;
+import static jpulsar.util.Streams.toList;
 import static jpulsar.util.Util.jsonEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -39,6 +49,14 @@ public class ScannerTest {
 
     private final TestAnnotationData emptyTestAnnotation = new TestAnnotationData(null, asList(), asList());
     private final Class<?>[] emptyParameterTypes = {};
+    private final ConstructorInfo emptyConstructorInfo = new ConstructorInfo(1, emptyParameterTypes);
+    private final TestResourceAnnotationData emptyTestResourceAnnotation = new TestResourceAnnotationData(null,
+            0,
+            false,
+            false,
+            false,
+            TestResourceScope.GLOBAL,
+            asList());
 
     public static <T> String getPackagePath(Class<T> clazz) {
         String[] full = clazz.getName().split("\\.");
@@ -91,7 +109,7 @@ public class ScannerTest {
     void testMethodInitialization() {
         TestScanResult result = scanPackages(getPackagePath(TestMethods.class), Scanner::collectTestClasses);
         jsonEquals(asList(new TestClass<>(TestMethods.class,
-                new ConstructorInfo(1, emptyParameterTypes),
+                emptyConstructorInfo,
                 asList(
                         new TestMethod("test0",
                                 0,
@@ -109,6 +127,7 @@ public class ScannerTest {
                 asList(new TestResourceMethod("testResource",
                         0,
                         emptyParameterTypes,
+                        new MethodReturnType(TestResource1.class, asList()),
                         new TestResourceAnnotationData(null,
                                 null,
                                 false,
@@ -132,31 +151,67 @@ public class ScannerTest {
     void testVisibility() {
         TestScanResult result = scanPackages(getPackagePath(VisibilityTest.class), Scanner::collectTestClasses);
         List<Integer> modifiers = asList(0, 9, 8, 12, 10, 1, 0, 4, 2);
+        Counter trCounter = new Counter(0);
+        List<Class<?>> trReturnType = asList(TestResource1.class,
+                TestResource2.class,
+                TestResource3.class,
+                TestResource4.class,
+                TestResource5.class,
+                TestResource6.class,
+                TestResource7.class,
+                TestResource8.class
+        );
         TestClass<VisibilityTest> visibilityTestTestClass = new TestClass<>(VisibilityTest.class,
                 null,
-                IntStream.range(1, 9).mapToObj(i -> addPrivateProtectedIssue(i, new TestMethod("test" + i,
+                toList(IntStream.range(1, 9).mapToObj(i -> addPrivateProtectedIssue(i, new TestMethod("test" + i,
                         modifiers.get(i),
                         emptyParameterTypes,
                         emptyTestAnnotation))
-                ).collect(toList()),
-                IntStream.range(1, 9).mapToObj(i -> addPrivateProtectedIssue(i, new TestResourceMethod("tr" + i,
+                )),
+                toList(IntStream.range(1, 9).mapToObj(i -> addPrivateProtectedIssue(i, new TestResourceMethod("tr" + i,
                         modifiers.get(i),
                         emptyParameterTypes,
-                        new TestResourceAnnotationData(null,
-                                0,
-                                false,
-                                false,
-                                false,
-                                TestResourceScope.GLOBAL,
-                                asList())))
-                ).collect(toList())
+                        new MethodReturnType(trReturnType.get(trCounter.postfixIncrement()), asList()),
+                        emptyTestResourceAnnotation))
+                ))
         );
         visibilityTestTestClass.getIssues().add(VisibilityTest.class.getName() + " has 4 constructors. Should have 0 or 1 constructor");
         jsonEquals(asList(visibilityTestTestClass), result.getTestClasses());
     }
 
+    @Test
+    void testResources() {
+        TestScanResult result = scanPackages(getPackagePath(jpulsar.scan.testresources.TestResources.class),
+                Scanner::collectTestClasses);
+        TestClass<jpulsar.scan.testresources.TestResources> testResources =
+                new TestClass<>(jpulsar.scan.testresources.TestResources.class,
+                        emptyConstructorInfo,
+                        asList(),
+                        asList(
+                                new TestResourceMethod("tr1",
+                                        1,
+                                        emptyParameterTypes,
+                                        new MethodReturnType(TestResource1.class, asList()),
+                                        emptyTestResourceAnnotation),
+                                new TestResourceMethod("tr2",
+                                        1,
+                                        emptyParameterTypes,
+                                        new MethodReturnType(Supplier.class,
+                                                asList(new MethodReturnType(TestResource2.class, asList()))),
+                                        emptyTestResourceAnnotation),
+                                new TestResourceMethod("tr3",
+                                        1,
+                                        emptyParameterTypes,
+                                        new MethodReturnType(Supplier.class,
+                                                asList(new MethodReturnType(Supplier.class,
+                                                        asList(new MethodReturnType(TestResource3.class, asList()))))),
+                                        emptyTestResourceAnnotation)
+                        ));
+        jsonEquals(asList(testResources), result.getTestClasses());
+    }
+
     private List<String> getParameterTypeClassNames(List<Class<?>> methodParameterTypes) {
-        return methodParameterTypes.stream().map(Class::getName).collect(toList());
+        return map(methodParameterTypes, Class::getName);
     }
 
     @Test
@@ -187,15 +242,15 @@ public class ScannerTest {
                     "TicketSaleErrorsTest",
                     "TicketSaleMobileTest",
                     "TicketSaleTest"
-            ), classesAnnotation.stream().map(ClassInfo::getSimpleName).sorted().collect(toList()));
+            ), toList(classesAnnotation.stream().map(ClassInfo::getSimpleName).sorted()));
             return "";
         });
     }
 
     private <T> void assertAnnotedMethods(ScanResult scanResult, Class<T> clazz, List<String> expected) {
         Stream<MethodInfo> annotedMethods = getAnnotedMethods(scanResult, clazz);
-        List<String> actual = annotedMethods.map(methodInfo -> methodInfo.getClassInfo().getSimpleName() + "." + methodInfo.getName()).sorted().collect(toList());
-        assertEquals(expected, actual);
+        Stream<String> actual = annotedMethods.map(methodInfo -> methodInfo.getClassInfo().getSimpleName() + "." + methodInfo.getName()).sorted();
+        assertEquals(expected, toList(actual));
     }
 
     private <T> Stream<MethodInfo> getAnnotedMethods(ScanResult scanResult, Class<T> clazz) {

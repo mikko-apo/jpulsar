@@ -6,28 +6,35 @@ import io.github.classgraph.AnnotationParameterValueList;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ClassInfoList;
+import io.github.classgraph.ClassRefTypeSignature;
 import io.github.classgraph.MethodInfo;
 import io.github.classgraph.MethodInfoList;
 import io.github.classgraph.MethodParameterInfo;
+import io.github.classgraph.MethodTypeSignature;
+import io.github.classgraph.ReferenceTypeSignature;
 import io.github.classgraph.ScanResult;
+import io.github.classgraph.TypeSignature;
 import jpulsar.Test;
 import jpulsar.TestResource;
 import jpulsar.TestResourceScope;
 import jpulsar.scan.annotationdata.TestAnnotationData;
 import jpulsar.scan.annotationdata.TestResourceAnnotationData;
 import jpulsar.scan.method.ConstructorInfo;
+import jpulsar.scan.method.MethodReturnType;
 import jpulsar.scan.method.ModifierHelper;
 import jpulsar.scan.method.TestMethod;
 import jpulsar.scan.method.TestMethodBase;
 import jpulsar.scan.method.TestResourceMethod;
 import jpulsar.util.NamedItem;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.function.Function;
 
 import static java.util.Arrays.asList;
 import static jpulsar.scan.ScanErrors.invalidAttributes;
 import static jpulsar.util.Streams.filter;
+import static jpulsar.util.Streams.map;
 import static jpulsar.util.Strings.mapJoin;
 
 public class Scanner {
@@ -52,8 +59,12 @@ public class Scanner {
     @SuppressWarnings("unchecked")
     static public TestScanResult collectTestClasses(ScanResult scanResult) {
         ClassInfoList classesWithTests = scanResult.getClassesWithMethodAnnotation(jpulsar.Test.class.getName());
+        ClassInfoList classesWithResources = scanResult.getClassesWithMethodAnnotation(jpulsar.TestResource.class.getName());
+        LinkedHashSet<ClassInfo> allClasses = new LinkedHashSet<>();
+        allClasses.addAll(classesWithTests);
+        allClasses.addAll(classesWithResources);
         TestScanResult testScanResult = new TestScanResult();
-        for(ClassInfo classInfo : classesWithTests) {
+        for (ClassInfo classInfo : allClasses) {
             Class<?> clazz = classInfo.loadClass();
             TestClass<?> testClass = new TestClass<>(clazz);
             testScanResult.addTestClass(testClass);
@@ -139,10 +150,13 @@ public class Scanner {
         Boolean hidden = (Boolean) annotationParameterValues.getValue("hidden");
         TestResourceScope scope = (TestResourceScope) ((AnnotationEnumValue) annotationParameterValues.getValue("scope")).loadClassAndReturnEnumValue();
         String[] usecases = (String[]) annotationParameterValues.getValue("usecases");
+        MethodTypeSignature methodTypeSignature = methodInfo.getTypeSignatureOrTypeDescriptor();
+        TypeSignature typeSignature = methodTypeSignature.getResultType();
         TestResourceMethod testResourceMethod = new TestResourceMethod(
                 methodInfo.getName(),
                 methodInfo.getModifiers(),
                 getParameterClassArray(scanResult, methodInfo),
+                resolveMethodReturnTypes((ClassRefTypeSignature) typeSignature),
                 new TestResourceAnnotationData(name,
                         max,
                         shared,
@@ -159,5 +173,11 @@ public class Scanner {
             testResourceMethod.addIssue("Can enable only one feature. Now has", mapJoin(enabledFeatures, booleanNamedItem -> booleanNamedItem.name, ", "));
         }
         return testResourceMethod;
+    }
+
+    private static MethodReturnType resolveMethodReturnTypes(ClassRefTypeSignature classRefTypeSignature) {
+        return new MethodReturnType(classRefTypeSignature.loadClass(),
+                map(classRefTypeSignature.getTypeArguments(),
+                        typeArgument -> resolveMethodReturnTypes((ClassRefTypeSignature)typeArgument.getTypeSignature())));
     }
 }
