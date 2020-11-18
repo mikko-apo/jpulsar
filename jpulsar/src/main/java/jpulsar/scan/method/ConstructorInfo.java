@@ -1,9 +1,7 @@
 package jpulsar.scan.method;
 
-import java.util.List;
-
 public class ConstructorInfo extends TestMethodBase {
-    public ConstructorInfo(int modifiers, List<Class<?>> methodParameterTypes) {
+    public ConstructorInfo(int modifiers, Class<?>[] methodParameterTypes) {
         super(null, modifiers, methodParameterTypes);
     }
 }

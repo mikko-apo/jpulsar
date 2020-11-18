@@ -1,4 +1,4 @@
-package jpulsar.test;
+package jpulsar.util;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
