@@ -24,35 +24,32 @@ public class SerialTester {
     }
 
     private static <T> TestMethodResult runTestMethod(TestClass<T> testClass, TestMethod testMethod) {
+        Throwable exception = null;
+        Benchmark benchmark = new Benchmark();
+        TestStepCollector testStepCollector = new TestStepCollector(benchmark.start);
+
+        ConstructorInfo constructorInfo = testClass.getConstructorInfo();
+        Class<?>[] constructorParameters = constructorInfo.getMethodParameters().getClassArray();
         try {
-            ConstructorInfo constructorInfo = testClass.getConstructorInfo();
-            Class<?>[] constructorParameters = constructorInfo.getMethodParameters().getClassArray();
             Constructor<T> testClassConstructor = testClass
                     .getClazz()
                     .getConstructor(constructorParameters);
             Object testClassInstance = testClassConstructor.newInstance();
             Class<?>[] parameterTypes = testMethod.getMethodParameters().getClassArray();
             Method method = testClass.getClazz().getMethod(testMethod.getMethodName(), parameterTypes);
-            Throwable exception = null;
-            long durationMs;
-            Benchmark benchmark = new Benchmark();
-            TestStepCollector testStepCollector = new TestStepCollector(benchmark.start);
             try {
                 method.invoke(testClassInstance);
             } catch (InvocationTargetException e) {
                 exception = e.getCause();
-            } catch (Exception e) {
-                exception = e;
-            } finally {
-                durationMs = benchmark.durationMsAndSet();
             }
-            ExceptionResult exceptionResult = null;
-            if (exception != null) {
-                exceptionResult = new ExceptionResult(exception);
-            }
-            return new TestMethodResult(testMethod.getMethodName(), exceptionResult, durationMs, testStepCollector.getSteps());
-        } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
-            throw new RuntimeException(e);
+        } catch ( Exception e) {
+            exception = e;
         }
+
+        ExceptionResult exceptionResult = null;
+        if (exception != null) {
+            exceptionResult = new ExceptionResult(exception);
+        }
+        return new TestMethodResult(testMethod.getMethodName(), exceptionResult, benchmark.durationMsAndSet(), testStepCollector.getSteps());
     }
 }
