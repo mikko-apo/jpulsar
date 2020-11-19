@@ -1,6 +1,7 @@
 package jpulsar.scan.test_method;
 
 import jpulsar.Test;
+import jpulsar.TestResource;
 import jpulsar.scan.resources.TestResource1;
 import jpulsar.scan.resources.TestResource2;
 
@@ -20,7 +21,7 @@ public class TestMethods {
 
     }
 
-    @jpulsar.TestResource
+    @TestResource
     TestResource1 testResource() {
         return new TestResource1();
     }

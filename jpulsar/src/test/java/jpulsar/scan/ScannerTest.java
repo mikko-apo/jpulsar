@@ -58,6 +58,13 @@ public class ScannerTest {
             false,
             TestResourceScope.GLOBAL,
             asList());
+    private final TestResourceAnnotationData emptyClassTestResourceAnnotation = new TestResourceAnnotationData(null,
+            0,
+            false,
+            false,
+            false,
+            TestResourceScope.CLASS,
+            asList());
 
     public static <T> String getPackagePath(Class<T> clazz) {
         String[] full = clazz.getName().split("\\.");
@@ -129,13 +136,8 @@ public class ScannerTest {
                         0,
                         emptyParameters,
                         new TypeSignature(TestResource1.class, asList()),
-                        new TestResourceAnnotationData(null,
-                                null,
-                                false,
-                                false,
-                                false,
-                                TestResourceScope.GLOBAL,
-                                asList()))))), result.getTestClasses());
+                        emptyClassTestResourceAnnotation
+                        )))), result.getTestClasses());
     }
 
     private MethodParameterInfo createMethodParameterInfo(Class<?>... classes) {
@@ -177,7 +179,7 @@ public class ScannerTest {
                         modifiers.get(i),
                         emptyParameters,
                         new TypeSignature(trReturnType.get(trCounter.postfixIncrement()), asList()),
-                        emptyTestResourceAnnotation))
+                        emptyClassTestResourceAnnotation))
                 ))
         );
         visibilityTestTestClass.getIssues().add(VisibilityTest.class.getName() + " has 4 constructors. Should have 0 or 1 constructor");

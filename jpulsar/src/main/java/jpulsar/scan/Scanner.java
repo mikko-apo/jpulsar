@@ -18,11 +18,11 @@ import jpulsar.scan.annotationdata.TestAnnotationData;
 import jpulsar.scan.annotationdata.TestResourceAnnotationData;
 import jpulsar.scan.method.ConstructorInfo;
 import jpulsar.scan.method.MethodParameterInfo;
-import jpulsar.scan.method.TypeSignature;
 import jpulsar.scan.method.ModifierHelper;
 import jpulsar.scan.method.TestMethod;
 import jpulsar.scan.method.TestMethodBase;
 import jpulsar.scan.method.TestResourceMethod;
+import jpulsar.scan.method.TypeSignature;
 import jpulsar.util.NamedItem;
 
 import java.util.ArrayList;
@@ -57,31 +57,40 @@ public class Scanner {
 
     @SuppressWarnings("unchecked")
     static public TestScanResult collectTestClasses(ScanResult scanResult) {
-        ClassInfoList classesWithTests = scanResult.getClassesWithMethodAnnotation(jpulsar.Test.class.getName());
+        LinkedHashSet<ClassInfo> classesWithTests = new LinkedHashSet<>(
+                scanResult.getClassesWithMethodAnnotation(jpulsar.Test.class.getName())
+        );
         ClassInfoList classesWithResources = scanResult.getClassesWithMethodAnnotation(jpulsar.TestResource.class.getName());
         LinkedHashSet<ClassInfo> allClasses = new LinkedHashSet<>();
         allClasses.addAll(classesWithTests);
         allClasses.addAll(classesWithResources);
         TestScanResult testScanResult = new TestScanResult();
         for (ClassInfo classInfo : allClasses) {
-            Class<?> clazz = classInfo.loadClass();
-            TestClass<?> testClass = new TestClass<>(clazz);
+            TestClass<?> testClass = new TestClass<>(classInfo.loadClass());
             testScanResult.addTestClass(testClass);
-            MethodInfoList constructors = classInfo.getConstructorInfo();
-            ensureCorrectModifiers(testClass, clazz.getModifiers());
-            if (constructors.size() == 1) {
-                MethodInfo methodInfo = constructors.get(0);
-                testClass.setConstructorInfo(new ConstructorInfo(methodInfo.getModifiers(), resolveParameterTypeSignatures(scanResult, methodInfo)));
-            } else if (constructors.size() > 1) {
-                testClass.addClassIssue("has " + constructors.size() + " constructors. Should have 0 or 1 constructor");
-            }
-            MethodInfoList methodInfoList = classInfo.getMethodInfo();
-            processMethods(scanResult, methodInfoList, testClass);
+            processConstructors(scanResult, classInfo.getConstructorInfo(), testClass);
+            boolean testResourcesHaveClassScope = classesWithTests.contains(classInfo);
+            processMethods(scanResult, classInfo.getMethodInfo(), testClass, testResourcesHaveClassScope);
         }
         return testScanResult;
     }
 
-    private static void processMethods(ScanResult scanResult, MethodInfoList methodInfoList, TestClass<?> testClass) {
+    private static void processConstructors(ScanResult scanResult, MethodInfoList constructors, TestClass<?> testClass) {
+        ensureCorrectModifiers(testClass, testClass.getClazz().getModifiers());
+        if (constructors.size() == 1) {
+            MethodInfo methodInfo = constructors.get(0);
+            ConstructorInfo constructorInfo = new ConstructorInfo(methodInfo.getModifiers(),
+                    resolveParameterTypeSignatures(scanResult, methodInfo));
+            testClass.setConstructorInfo(constructorInfo);
+        } else if (constructors.size() > 1) {
+            testClass.addClassIssue("has " + constructors.size() + " constructors. Should have 0 or 1 constructor");
+        }
+    }
+
+    private static void processMethods(ScanResult scanResult,
+                                       MethodInfoList methodInfoList,
+                                       TestClass<?> testClass,
+                                       boolean testResourcesHaveClassScope) {
         for (MethodInfo methodInfo : methodInfoList) {
             AnnotationInfo testResourceAnnotation = methodInfo.getAnnotationInfo(TestResource.class.getName());
             boolean isTestResource = testResourceAnnotation != null;
@@ -94,7 +103,10 @@ public class Scanner {
                     testClass.addTestMethod(testMethod);
                     method = testMethod;
                 } else {
-                    TestResourceMethod testResource = createTestResource(scanResult, methodInfo, testResourceAnnotation);
+                    TestResourceMethod testResource = createTestResource(scanResult,
+                            methodInfo,
+                            testResourceAnnotation,
+                            testResourcesHaveClassScope);
                     testClass.addTestResource(testResource);
                     method = testResource;
                 }
@@ -142,7 +154,10 @@ public class Scanner {
         }
     }
 
-    static private TestResourceMethod createTestResource(ScanResult scanResult, MethodInfo methodInfo, AnnotationInfo testResourceAnnotation) {
+    static private TestResourceMethod createTestResource(ScanResult scanResult,
+                                                         MethodInfo methodInfo,
+                                                         AnnotationInfo testResourceAnnotation,
+                                                         boolean testResourcesHaveClassScope) {
         AnnotationParameterValueList annotationParameterValues = testResourceAnnotation.getParameterValues();
         String name = (String) annotationParameterValues.getValue("name");
         Integer max = (Integer) annotationParameterValues.getValue("max");
@@ -150,6 +165,9 @@ public class Scanner {
         Boolean fixed = (Boolean) annotationParameterValues.getValue("fixed");
         Boolean hidden = (Boolean) annotationParameterValues.getValue("hidden");
         TestResourceScope scope = (TestResourceScope) ((AnnotationEnumValue) annotationParameterValues.getValue("scope")).loadClassAndReturnEnumValue();
+        if (scope == TestResourceScope.DEFAULT) {
+            scope = testResourcesHaveClassScope ? TestResourceScope.CLASS : TestResourceScope.GLOBAL;
+        }
         String[] usecases = (String[]) annotationParameterValues.getValue("usecases");
         MethodTypeSignature methodTypeSignature = methodInfo.getTypeSignatureOrTypeDescriptor();
         TestResourceMethod testResourceMethod = new TestResourceMethod(
