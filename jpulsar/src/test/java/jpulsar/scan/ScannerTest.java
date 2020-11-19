@@ -11,10 +11,10 @@ import jpulsar.scan.annotationdata.TestAnnotationData;
 import jpulsar.scan.annotationdata.TestResourceAnnotationData;
 import jpulsar.scan.method.ConstructorInfo;
 import jpulsar.scan.method.MethodParameterInfo;
-import jpulsar.scan.method.TypeSignature;
 import jpulsar.scan.method.ModifierHelper;
 import jpulsar.scan.method.TestMethod;
 import jpulsar.scan.method.TestResourceMethod;
+import jpulsar.scan.method.TypeSignature;
 import jpulsar.scan.resources.TestResource1;
 import jpulsar.scan.resources.TestResource2;
 import jpulsar.scan.resources.TestResource3;
@@ -137,7 +137,7 @@ public class ScannerTest {
                         emptyParameters,
                         new TypeSignature(TestResource1.class, asList()),
                         emptyClassTestResourceAnnotation
-                        )))), result.getTestClasses());
+                )))), result.getTestClasses());
     }
 
     private MethodParameterInfo createMethodParameterInfo(Class<?>... classes) {

@@ -57,6 +57,7 @@ public class Scanner {
 
     @SuppressWarnings("unchecked")
     static public TestScanResult collectTestClasses(ScanResult scanResult) {
+        TestScanResult testScanResult = new TestScanResult();
         LinkedHashSet<ClassInfo> classesWithTests = new LinkedHashSet<>(
                 scanResult.getClassesWithMethodAnnotation(jpulsar.Test.class.getName())
         );
@@ -64,13 +65,19 @@ public class Scanner {
         LinkedHashSet<ClassInfo> allClasses = new LinkedHashSet<>();
         allClasses.addAll(classesWithTests);
         allClasses.addAll(classesWithResources);
-        TestScanResult testScanResult = new TestScanResult();
+
         for (ClassInfo classInfo : allClasses) {
             TestClass<?> testClass = new TestClass<>(classInfo.loadClass());
             testScanResult.addTestClass(testClass);
+
             processConstructors(scanResult, classInfo.getConstructorInfo(), testClass);
+
             boolean testResourcesHaveClassScope = classesWithTests.contains(classInfo);
             processMethods(scanResult, classInfo.getMethodInfo(), testClass, testResourcesHaveClassScope);
+
+            List<TestResourceMethod> globalTestResourceMethods = filter(testClass.getTestResources(),
+                    testResourceMethod -> testResourceMethod.getTestResourceAnnotation().getScope() == TestResourceScope.GLOBAL);
+            testScanResult.getGlobalTestResourceMethods().addAll(globalTestResourceMethods);
         }
         return testScanResult;
     }
