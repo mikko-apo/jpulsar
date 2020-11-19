@@ -9,24 +9,23 @@ import io.github.classgraph.ClassInfoList;
 import io.github.classgraph.ClassRefTypeSignature;
 import io.github.classgraph.MethodInfo;
 import io.github.classgraph.MethodInfoList;
-import io.github.classgraph.MethodParameterInfo;
 import io.github.classgraph.MethodTypeSignature;
-import io.github.classgraph.ReferenceTypeSignature;
 import io.github.classgraph.ScanResult;
-import io.github.classgraph.TypeSignature;
 import jpulsar.Test;
 import jpulsar.TestResource;
 import jpulsar.TestResourceScope;
 import jpulsar.scan.annotationdata.TestAnnotationData;
 import jpulsar.scan.annotationdata.TestResourceAnnotationData;
 import jpulsar.scan.method.ConstructorInfo;
-import jpulsar.scan.method.MethodReturnType;
+import jpulsar.scan.method.MethodParameterInfo;
+import jpulsar.scan.method.TypeSignature;
 import jpulsar.scan.method.ModifierHelper;
 import jpulsar.scan.method.TestMethod;
 import jpulsar.scan.method.TestMethodBase;
 import jpulsar.scan.method.TestResourceMethod;
 import jpulsar.util.NamedItem;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.function.Function;
@@ -72,7 +71,7 @@ public class Scanner {
             ensureCorrectModifiers(testClass, clazz.getModifiers());
             if (constructors.size() == 1) {
                 MethodInfo methodInfo = constructors.get(0);
-                testClass.setConstructorInfo(new ConstructorInfo(methodInfo.getModifiers(), getParameterClassArray(scanResult, methodInfo)));
+                testClass.setConstructorInfo(new ConstructorInfo(methodInfo.getModifiers(), resolveParameterTypeSignatures(scanResult, methodInfo)));
             } else if (constructors.size() > 1) {
                 testClass.addClassIssue("has " + constructors.size() + " constructors. Should have 0 or 1 constructor");
             }
@@ -107,14 +106,16 @@ public class Scanner {
         }
     }
 
-    static private Class<?>[] getParameterClassArray(ScanResult scanResult, MethodInfo methodInfo) {
-        MethodParameterInfo[] parameterInfos = methodInfo.getParameterInfo();
+    static private MethodParameterInfo resolveParameterTypeSignatures(ScanResult scanResult, MethodInfo methodInfo) {
+        io.github.classgraph.MethodParameterInfo[] parameterInfos = methodInfo.getParameterInfo();
         Class<?>[] arr = new Class<?>[parameterInfos.length];
+        List<TypeSignature> typeSignatures = new ArrayList<>();
         for (int i = 0; i < parameterInfos.length; i++) {
-            MethodParameterInfo parameterInfo = parameterInfos[i];
+            io.github.classgraph.MethodParameterInfo parameterInfo = parameterInfos[i];
             arr[i] = scanResult.loadClass(parameterInfo.getTypeDescriptor().toString(), false);
+            typeSignatures.add(resolveTypeSignature(parameterInfo.getTypeSignatureOrTypeDescriptor()));
         }
-        return arr;
+        return new MethodParameterInfo(arr, typeSignatures);
     }
 
     static private TestMethod createTestMethod(ScanResult scanResult, MethodInfo methodInfo, AnnotationInfo testAnnotation) {
@@ -125,7 +126,7 @@ public class Scanner {
         return new TestMethod(
                 methodInfo.getName(),
                 methodInfo.getModifiers(),
-                getParameterClassArray(scanResult, methodInfo),
+                resolveParameterTypeSignatures(scanResult, methodInfo),
                 new TestAnnotationData(name,
                         asList(usecases),
                         asList(tags)));
@@ -151,12 +152,11 @@ public class Scanner {
         TestResourceScope scope = (TestResourceScope) ((AnnotationEnumValue) annotationParameterValues.getValue("scope")).loadClassAndReturnEnumValue();
         String[] usecases = (String[]) annotationParameterValues.getValue("usecases");
         MethodTypeSignature methodTypeSignature = methodInfo.getTypeSignatureOrTypeDescriptor();
-        TypeSignature typeSignature = methodTypeSignature.getResultType();
         TestResourceMethod testResourceMethod = new TestResourceMethod(
                 methodInfo.getName(),
                 methodInfo.getModifiers(),
-                getParameterClassArray(scanResult, methodInfo),
-                resolveMethodReturnTypes((ClassRefTypeSignature) typeSignature),
+                resolveParameterTypeSignatures(scanResult, methodInfo),
+                resolveTypeSignature(methodTypeSignature.getResultType()),
                 new TestResourceAnnotationData(name,
                         max,
                         shared,
@@ -165,7 +165,8 @@ public class Scanner {
                         scope,
                         asList(usecases)));
         boolean maxDefined = TestResourceAnnotationData.MaxDefault != max;
-        List<NamedItem<Boolean>> enabledFeatures = filter(asList(new NamedItem<>("max", maxDefined),
+        List<NamedItem<Boolean>> enabledFeatures = filter(asList(
+                new NamedItem<>("max", maxDefined),
                 new NamedItem<>("shared", shared),
                 new NamedItem<>("fixed", fixed)
         ), booleanNamedItem -> booleanNamedItem.data);
@@ -175,9 +176,10 @@ public class Scanner {
         return testResourceMethod;
     }
 
-    private static MethodReturnType resolveMethodReturnTypes(ClassRefTypeSignature classRefTypeSignature) {
-        return new MethodReturnType(classRefTypeSignature.loadClass(),
+    private static TypeSignature resolveTypeSignature(io.github.classgraph.TypeSignature typeSignature) {
+        ClassRefTypeSignature classRefTypeSignature = (ClassRefTypeSignature) typeSignature;
+        return new TypeSignature(classRefTypeSignature.loadClass(),
                 map(classRefTypeSignature.getTypeArguments(),
-                        typeArgument -> resolveMethodReturnTypes((ClassRefTypeSignature)typeArgument.getTypeSignature())));
+                        typeArgument -> resolveTypeSignature(typeArgument.getTypeSignature())));
     }
 }

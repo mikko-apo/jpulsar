@@ -2,11 +2,11 @@ package jpulsar.scan.method;
 
 import java.util.List;
 
-public class MethodReturnType {
+public class TypeSignature {
     private final Class<?> typeClass;
-    private final List<MethodReturnType> classArguments;
+    private final List<TypeSignature> classArguments;
 
-    public MethodReturnType(Class<?> typeClass, List<MethodReturnType> classArguments) {
+    public TypeSignature(Class<?> typeClass, List<TypeSignature> classArguments) {
         this.typeClass = typeClass;
         this.classArguments = classArguments;
     }
@@ -15,7 +15,7 @@ public class MethodReturnType {
         return typeClass;
     }
 
-    public List<MethodReturnType> getClassArguments() {
+    public List<TypeSignature> getClassArguments() {
         return classArguments;
     }
 }

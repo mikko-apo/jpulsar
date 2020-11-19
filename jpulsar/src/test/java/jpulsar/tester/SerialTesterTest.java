@@ -13,6 +13,7 @@ import static java.util.Arrays.asList;
 import static jpulsar.scan.Scanner.scanPackages;
 import static jpulsar.scan.ScannerTest.getPackagePath;
 import static jpulsar.util.Util.jsonEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class SerialTesterTest {
@@ -38,6 +39,7 @@ public class SerialTesterTest {
         removeStacktraceDuration(result);
         removeStacktraceDuration(expectedTestRunResult);
         jsonEquals(expectedTestRunResult, result);
+        assertEquals(4, TwoOkTwoFail.testCount);
     }
 
     @Test

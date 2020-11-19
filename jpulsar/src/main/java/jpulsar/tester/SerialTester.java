@@ -26,12 +26,12 @@ public class SerialTester {
     private static <T> TestMethodResult runTestMethod(TestClass<T> testClass, TestMethod testMethod) {
         try {
             ConstructorInfo constructorInfo = testClass.getConstructorInfo();
-            Class<?>[] constructorParameters = constructorInfo.getMethodParameterTypes();
+            Class<?>[] constructorParameters = constructorInfo.getMethodParameters().getClassArray();
             Constructor<T> testClassConstructor = testClass
                     .getClazz()
                     .getConstructor(constructorParameters);
             Object testClassInstance = testClassConstructor.newInstance();
-            Class<?>[] parameterTypes = testMethod.getMethodParameterTypes();
+            Class<?>[] parameterTypes = testMethod.getMethodParameters().getClassArray();
             Method method = testClass.getClazz().getMethod(testMethod.getMethodName(), parameterTypes);
             Throwable exception = null;
             long durationMs;
