@@ -6,14 +6,13 @@ import static jpulsar.util.Threads.sleep;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TwoOkTwoFail {
-    public static int testCount;
-    static int counter = 0;
+    public static int testCount = 0;
+    public static int counter = 0;
 
     @Test
     public void ok1() {
         counter++;
         testCount++;
-        assertEquals(1, counter);
         sleep(10);
     }
 
@@ -21,7 +20,6 @@ public class TwoOkTwoFail {
     public void ok2() {
         testCount++;
         counter += 2;
-        assertEquals(3, counter);
     }
 
     @Test
@@ -34,6 +32,7 @@ public class TwoOkTwoFail {
     @Test
     public void fail2() {
         testCount++;
+        counter += 8;
         assertEquals(1, 2);
     }
 }

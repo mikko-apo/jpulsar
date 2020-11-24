@@ -1,6 +1,7 @@
 package jpulsar.scan;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static jpulsar.util.Strings.join;
@@ -13,7 +14,7 @@ public class Issues {
     }
 
     public void addIssue(String... s) {
-        issues.add(join(s, " "));
+        addIssue(Arrays.asList(s));
     }
 
     public void addIssue(List<String> s) {

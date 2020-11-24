@@ -28,15 +28,15 @@ public class SerialTester {
         Benchmark benchmark = new Benchmark();
         TestStepCollector testStepCollector = new TestStepCollector(benchmark.start);
 
-        ConstructorInfo constructorInfo = testClass.getConstructorInfo();
-        Class<?>[] constructorParameters = constructorInfo.getMethodParameters().getClassArray();
+        ConstructorInfo constructorInfo = testClass.getConstructor();
+        Class<?>[] constructorParameters = constructorInfo.getConstructor().getParameterTypes();
         try {
             Constructor<T> testClassConstructor = testClass
                     .getClazz()
                     .getConstructor(constructorParameters);
             Object testClassInstance = testClassConstructor.newInstance();
-            Class<?>[] parameterTypes = testMethod.getMethodParameters().getClassArray();
-            Method method = testClass.getClazz().getMethod(testMethod.getMethodName(), parameterTypes);
+            Class<?>[] parameterTypes = testMethod.getMethod().getParameterTypes();
+            Method method = testClass.getClazz().getMethod(testMethod.getMethod().getName(), parameterTypes);
             try {
                 method.invoke(testClassInstance);
             } catch (InvocationTargetException e) {
@@ -50,6 +50,6 @@ public class SerialTester {
         if (exception != null) {
             exceptionResult = new ExceptionResult(exception);
         }
-        return new TestMethodResult(testMethod.getMethodName(), exceptionResult, benchmark.durationMsAndSet(), testStepCollector.getSteps());
+        return new TestMethodResult(testMethod.getMethod().getName(), exceptionResult, benchmark.durationMsAndSet(), testStepCollector.getSteps());
     }
 }

@@ -5,10 +5,10 @@ import jpulsar.tester.ExceptionResult;
 public class TestStep {
     private final String name;
     private final ExceptionResult exception;
-    private Long startMs;
-    private Long durationMs;
+    private Integer startMs;
+    private Integer durationMs;
 
-    public TestStep(String name, ExceptionResult exception, Long startMs, Long durationMs) {
+    public TestStep(String name, ExceptionResult exception, Integer startMs, Integer durationMs) {
         this.name = name;
         this.exception = exception;
         this.startMs = startMs;
@@ -23,19 +23,19 @@ public class TestStep {
         return exception;
     }
 
-    public Long getStartMs() {
+    public Integer getStartMs() {
         return startMs;
     }
 
-    public void setStartMs(Long startMs) {
+    public void setStartMs(Integer startMs) {
         this.startMs = startMs;
     }
 
-    public Long getDurationMs() {
+    public Integer getDurationMs() {
         return durationMs;
     }
 
-    public void setDurationMs(Long durationMs) {
+    public void setDurationMs(Integer durationMs) {
         this.durationMs = durationMs;
     }
 }

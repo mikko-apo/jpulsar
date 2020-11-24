@@ -7,64 +7,46 @@ import io.github.classgraph.MethodInfo;
 import io.github.classgraph.ScanResult;
 import jpulsar.TestResourceScope;
 import jpulsar.Usecase;
-import jpulsar.scan.annotationdata.TestAnnotationData;
-import jpulsar.scan.annotationdata.TestResourceAnnotationData;
-import jpulsar.scan.method.ConstructorInfo;
-import jpulsar.scan.method.MethodParameterInfo;
 import jpulsar.scan.method.ModifierHelper;
-import jpulsar.scan.method.TestMethod;
-import jpulsar.scan.method.TestResourceMethod;
-import jpulsar.scan.method.TypeSignature;
 import jpulsar.scan.resources.TestResource1;
 import jpulsar.scan.resources.TestResource2;
-import jpulsar.scan.resources.TestResource3;
-import jpulsar.scan.resources.TestResource4;
-import jpulsar.scan.resources.TestResource5;
-import jpulsar.scan.resources.TestResource6;
-import jpulsar.scan.resources.TestResource7;
-import jpulsar.scan.resources.TestResource8;
 import jpulsar.scan.simple_errors.AbstractClassTestMethod;
 import jpulsar.scan.simple_errors.BothTestAndTestResource;
 import jpulsar.scan.simple_errors.TooManyConstructors;
 import jpulsar.scan.test_method.TestMethods;
-import jpulsar.scan.visibility.VisibilityTest;
-import jpulsar.util.Counter;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.function.Supplier;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
 import static jpulsar.scan.ScanErrors.invalidAttributes;
 import static jpulsar.scan.Scanner.scanPackages;
-import static jpulsar.util.Streams.map;
 import static jpulsar.util.Streams.toList;
-import static jpulsar.util.Util.jsonEquals;
+import static jpulsar.util.Util.scannerJackson;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ScannerTest {
 
-    private final TestAnnotationData emptyTestAnnotation = new TestAnnotationData(null, asList(), asList());
-    private final MethodParameterInfo emptyParameters = createMethodParameterInfo();
-    private final ConstructorInfo emptyConstructorInfo = new ConstructorInfo(1, emptyParameters);
-    private final TestResourceAnnotationData emptyTestResourceAnnotation = new TestResourceAnnotationData(null,
+    private final jpulsar.Test emptyTestAnnotation = TestClassBuilder.createTestAnnotation("", new String[0], new String[0]);
+    private final jpulsar.TestResource emptyTestResourceAnnotation = TestClassBuilder.createTestResourceAnnotation("",
             0,
             false,
             false,
             false,
             TestResourceScope.GLOBAL,
-            asList());
-    private final TestResourceAnnotationData emptyClassTestResourceAnnotation = new TestResourceAnnotationData(null,
+            new String[0]
+            );
+    private final jpulsar.TestResource emptyClassTestResourceAnnotation = TestClassBuilder.createTestResourceAnnotation("",
             0,
             false,
             false,
             false,
             TestResourceScope.CLASS,
-            asList());
+            new String[0]
+    );
 
     public static <T> String getPackagePath(Class<T> clazz) {
         String[] full = clazz.getName().split("\\.");
@@ -81,67 +63,39 @@ public class ScannerTest {
     @Test
     void simpleErrors() {
         TestScanResult result = scanPackages(getPackagePath(TooManyConstructors.class), Scanner::collectTestClasses);
-        TestMethod abstractTestMethod = new TestMethod("test",
-                1024,
-                emptyParameters,
-                emptyTestAnnotation);
-        abstractTestMethod.addIssue(invalidAttributes(asList(ModifierHelper.ABSTRACT)));
-        TestClass<AbstractClassTestMethod> t1 = new TestClass<>(AbstractClassTestMethod.class,
-                new ConstructorInfo(1, emptyParameters),
-                asList(abstractTestMethod),
-                asList());
-        t1.getIssues().add(invalidAttributes(asList(ModifierHelper.ABSTRACT)));
+        TestClassBuilder builder = new TestClassBuilder();
 
-        TestMethod twoAnnotationsTestMethod = new TestMethod("test",
-                0,
-                emptyParameters,
-                emptyTestAnnotation);
-        twoAnnotationsTestMethod.addIssue("has both @Test and @TestResource annotations. Can have only one.");
-        TestClass<BothTestAndTestResource> t2 = new TestClass<>(BothTestAndTestResource.class,
-                new ConstructorInfo(1, emptyParameters),
-                asList(twoAnnotationsTestMethod),
-                asList());
+        TestClass<?> t1 = builder.build(AbstractClassTestMethod.class);
+        builder.addTestMethod(emptyTestAnnotation, "test")
+                .addIssue(invalidAttributes(asList(ModifierHelper.ABSTRACT)));
+        builder.testClass.getConstructor().getIssues().add(invalidAttributes(asList(ModifierHelper.ABSTRACT)));
 
-        TestClass<TooManyConstructors> t3 = new TestClass<>(TooManyConstructors.class,
-                null,
-                asList(new TestMethod("test",
-                        0,
-                        emptyParameters,
-                        emptyTestAnnotation)),
-                asList());
-        t3.getIssues().add("jpulsar.scan.simple_errors.TooManyConstructors has 2 constructors. Should have 0 or 1 constructor");
-        jsonEquals(asList(t1, t2, t3), result.getTestClasses());
+        TestClass<?> t2 = builder.build(BothTestAndTestResource.class);
+        builder.addTestMethod(emptyTestAnnotation, "test")
+                .addIssue("has both @Test and @TestResource annotations. Can have only one.");
+
+        TestClass<?> t3 = builder.build(TooManyConstructors.class);
+        t3.getIssues().add("has 2 constructors. Should have 0 or 1 constructor");
+        t3.setConstructor(null);
+        builder.addTestMethod(emptyTestAnnotation, "test");
+        scannerJackson.jsonEquals(asList(t1, t2, t3), result.getTestClasses());
     }
 
     @Test
     void testMethodInitialization() {
         TestScanResult result = scanPackages(getPackagePath(TestMethods.class), Scanner::collectTestClasses);
-        jsonEquals(asList(new TestClass<>(TestMethods.class,
-                emptyConstructorInfo,
-                asList(
-                        new TestMethod("test0",
-                                0,
-                                emptyParameters,
-                                emptyTestAnnotation),
-                        new TestMethod("test1",
-                                0,
-                                createMethodParameterInfo(TestResource1.class),
-                                emptyTestAnnotation),
-                        new TestMethod("testWithInvalidTestResource",
-                                0,
-                                createMethodParameterInfo(TestResource1.class, TestResource2.class),
-                                emptyTestAnnotation)
-                ),
-                asList(new TestResourceMethod("testResource",
-                        0,
-                        emptyParameters,
-                        new TypeSignature(TestResource1.class, asList()),
-                        emptyClassTestResourceAnnotation
-                )))), result.getTestClasses());
-    }
+        TestClassBuilder builder = new TestClassBuilder();
 
-    private MethodParameterInfo createMethodParameterInfo(Class<?>... classes) {
-        return new MethodParameterInfo(classes, map(classes, aClass -> new TypeSignature(aClass, asList())));
+        TestClass<?> t1 = builder.build(TestMethods.class);
+        builder.addTestMethod(emptyTestAnnotation, "test0");
+        builder.addTestMethod(emptyTestAnnotation, "test1", TestResource1.class);
+        builder.addTestMethod(emptyTestAnnotation,
+                "testWithInvalidTestResource",
+                TestResource1.class,
+                TestResource2.class);
+        builder.addTestResourceMethod(emptyClassTestResourceAnnotation, "testResource", true);
+
+        scannerJackson.jsonEquals(asList(t1), result.getTestClasses());
     }
 
     private <T extends Issues> T addPrivateProtectedIssue(int index, T target) {
@@ -153,7 +107,7 @@ public class ScannerTest {
         }
         return target;
     }
-
+/*
     @Test
     void testVisibility() {
         TestScanResult result = scanPackages(getPackagePath(VisibilityTest.class), Scanner::collectTestClasses);
@@ -220,7 +174,7 @@ public class ScannerTest {
     private List<String> getParameterTypeClassNames(List<Class<?>> methodParameterTypes) {
         return map(methodParameterTypes, Class::getName);
     }
-
+*/
     @Test
     void scanJPulsarAnnotations() {
         scanPackages(getPackagePath(TestResources.class), scanResult -> {

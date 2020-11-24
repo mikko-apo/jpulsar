@@ -1,22 +1,43 @@
 package jpulsar.scan.method;
 
-import jpulsar.scan.annotationdata.TestResourceAnnotationData;
+import jpulsar.TestResource;
+import jpulsar.TestResourceScope;
+import jpulsar.scan.Issues;
 
-public class TestResourceMethod extends TestMethodBase {
-    private final TestResourceAnnotationData testResourceAnnotation;
+import java.lang.reflect.Method;
 
-    public TestResourceMethod(
-            String methodName,
-            int modifiers,
-            MethodParameterInfo methodParameters,
-            TypeSignature returnType,
-            TestResourceAnnotationData testResourceAnnotation) {
-        super(methodName, modifiers, methodParameters, returnType);
+public class TestResourceMethod extends Issues {
+    public static int MaxDefault = 0;
+
+    private final Method method;
+    private final TestResource testResourceAnnotation;
+    private final boolean classHasTests;
+
+    public TestResourceMethod(Method method, TestResource testResourceAnnotation, boolean classHasTests) {
+
+        this.method = method;
         this.testResourceAnnotation = testResourceAnnotation;
+        this.classHasTests = classHasTests;
     }
 
-    public TestResourceAnnotationData getTestResourceAnnotation() {
+    public Method getMethod() {
+        return method;
+    }
+
+    public TestResource getTestResourceAnnotation() {
         return testResourceAnnotation;
+    }
+
+    public boolean isClassHasTests() {
+        return classHasTests;
+    }
+
+    public TestResourceScope scope() {
+        TestResourceScope scope = testResourceAnnotation.scope();
+        if (scope == TestResourceScope.DEFAULT) {
+            scope = classHasTests ? TestResourceScope.CLASS : TestResourceScope.GLOBAL;
+        }
+        return scope;
     }
 }
 

@@ -7,10 +7,10 @@ import java.util.List;
 public class TestMethodResult {
     private final String name;
     private final ExceptionResult exception;
-    private Long durationMs;
+    private Integer durationMs;
     private final List<TestStep> steps;
 
-    public TestMethodResult(String name, ExceptionResult exception, Long durationMs, List<TestStep> steps) {
+    public TestMethodResult(String name, ExceptionResult exception, Integer durationMs, List<TestStep> steps) {
         this.name = name;
         this.exception = exception;
         this.durationMs = durationMs;
@@ -25,11 +25,11 @@ public class TestMethodResult {
         return exception;
     }
 
-    public Long getDurationMs() {
+    public Integer getDurationMs() {
         return durationMs;
     }
 
-    public void setDurationMs(Long durationMs) {
+    public void setDurationMs(Integer durationMs) {
         this.durationMs = durationMs;
     }
 
