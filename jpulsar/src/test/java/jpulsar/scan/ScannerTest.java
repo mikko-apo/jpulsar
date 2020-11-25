@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 import static java.util.Arrays.asList;
 import static jpulsar.scan.ScanErrors.invalidAttributes;
 import static jpulsar.scan.Scanner.scanPackages;
-import static jpulsar.util.Streams.toList;
+import static jpulsar.util.Collections.toList;
 import static jpulsar.util.Util.scannerJackson;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -75,7 +75,7 @@ public class ScannerTest {
                 .addIssue("has both @Test and @TestResource annotations. Can have only one.");
 
         TestClass<?> t3 = builder.build(TooManyConstructors.class);
-        t3.getIssues().add("has 2 constructors. Should have 0 or 1 constructor");
+        t3.getIssues().add("has 2 constructors. Should have 1 constructor");
         t3.setConstructor(null);
         builder.addTestMethod(emptyTestAnnotation, "test");
         scannerJackson.jsonEquals(asList(t1, t2, t3), result.getTestClasses());

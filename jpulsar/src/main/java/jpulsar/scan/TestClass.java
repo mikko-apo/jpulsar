@@ -1,17 +1,12 @@
 package jpulsar.scan;
 
-import io.github.classgraph.MethodInfo;
 import jpulsar.ResourceHandler;
-import jpulsar.TestResourceScope;
 import jpulsar.scan.method.ConstructorInfo;
 import jpulsar.scan.method.TestMethod;
 import jpulsar.scan.method.TestResourceMethod;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-
-import static jpulsar.util.Streams.filter;
 
 public class TestClass<T> extends Issues {
     final private Class<T> clazz;

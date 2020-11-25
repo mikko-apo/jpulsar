@@ -3,7 +3,7 @@ package jpulsar.scan.method;
 import java.lang.reflect.Modifier;
 import java.util.List;
 
-import static jpulsar.util.Streams.filter;
+import static jpulsar.util.Collections.filter;
 
 public enum ModifierHelper {
     PUBLIC("public"),

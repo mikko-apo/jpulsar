@@ -17,6 +17,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -24,10 +25,8 @@ import java.util.function.Function;
 
 import static java.util.Arrays.asList;
 import static jpulsar.scan.ScanErrors.invalidAttributes;
-import static jpulsar.util.Streams.filter;
-import static jpulsar.util.Streams.map;
-import static jpulsar.util.Strings.join;
-import static jpulsar.util.Strings.mapJoin;
+import static jpulsar.util.Collections.filter;
+import static jpulsar.util.Collections.map;
 
 public class Scanner {
     static public <R> R scanPackages(String packagePath, Function<ScanResult, R> processor) {
@@ -48,7 +47,6 @@ public class Scanner {
         }
     }
 
-    @SuppressWarnings("unchecked")
     static public TestScanResult collectTestClasses(ScanResult scanResult) {
         TestScanResult testScanResult = new TestScanResult();
         LinkedHashSet<ClassInfo> classesWithTests = new LinkedHashSet<>(
@@ -87,7 +85,7 @@ public class Scanner {
             checkParameterTypeSignatures(constructorInfo, constructor.getGenericParameterTypes());
             checkCorrectModifiers(constructorInfo, testClass.getClazz().getModifiers());
         } else if (constructors.length > 1) {
-            testClass.addIssue("has " + constructors.length + " constructors. Should have 0 or 1 constructor");
+            testClass.addIssue(ScanErrors.tooManyConstructors(constructors));
         }
     }
 
@@ -130,10 +128,10 @@ public class Scanner {
             if (parameterType instanceof ParameterizedType) {
                 ParameterizedType t = (ParameterizedType) parameterType;
                 List<String> params = map(t.getActualTypeArguments(), Type::getTypeName);
-                target.addIssue("parameter", Integer.toString(i), " is parameterized: " + join(params, ","));
+                target.addIssue(ScanErrors.parametrizedArgument(i, params));
             } else if (parameterType instanceof Class) {
             } else {
-                target.addIssue("unsupported parameter", Integer.toString(i), parameterType.getTypeName());
+                target.addIssue(ScanErrors.invalidParameter(i, parameterType));
             }
         }
     }
@@ -151,7 +149,9 @@ public class Scanner {
     static private TestResourceMethod createTestResource(Method method,
                                                          TestResource testResourceAnnotation,
                                                          boolean testResourcesHaveClassScope) {
-        TestResourceMethod testResourceMethod = new TestResourceMethod(method, testResourceAnnotation, testResourcesHaveClassScope);
+        TestResourceMethod testResourceMethod = new TestResourceMethod(method,
+                testResourceAnnotation,
+                testResourcesHaveClassScope);
         boolean maxDefined = TestResourceMethod.MaxDefault != testResourceAnnotation.max();
         List<NamedItem<Boolean>> enabledFeatures = filter(asList(
                 new NamedItem<>("max", maxDefined),
@@ -159,7 +159,7 @@ public class Scanner {
                 new NamedItem<>("fixed", testResourceAnnotation.fixed())
         ), booleanNamedItem -> booleanNamedItem.data);
         if (enabledFeatures.size() > 0) {
-            testResourceMethod.addIssue("Can enable only one feature. Now has", mapJoin(enabledFeatures, booleanNamedItem -> booleanNamedItem.name, ", "));
+            testResourceMethod.addIssue(ScanErrors.tooManyFeatures(enabledFeatures));
         }
         return testResourceMethod;
     }

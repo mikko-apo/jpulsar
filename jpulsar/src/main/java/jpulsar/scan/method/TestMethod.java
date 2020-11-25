@@ -4,11 +4,14 @@ import jpulsar.Test;
 import jpulsar.scan.Issues;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TestMethod extends Issues {
 
     private final Method method;
     private final Test testAnnotation;
+    private final List<TestResourceMethod> parameterTestResources = new ArrayList<>();
 
     public TestMethod(Method method, Test testAnnotation) {
         this.method = method;
@@ -21,5 +24,13 @@ public class TestMethod extends Issues {
 
     public Test getTestAnnotation() {
         return testAnnotation;
+    }
+
+    public void addParameterTestResource(TestResourceMethod testResourceMethod) {
+        parameterTestResources.add(testResourceMethod);
+    }
+
+    public List<TestResourceMethod> getParameterTestResources() {
+        return parameterTestResources;
     }
 }

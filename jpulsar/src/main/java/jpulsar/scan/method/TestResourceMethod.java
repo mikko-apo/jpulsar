@@ -14,7 +14,6 @@ public class TestResourceMethod extends Issues {
     private final boolean classHasTests;
 
     public TestResourceMethod(Method method, TestResource testResourceAnnotation, boolean classHasTests) {
-
         this.method = method;
         this.testResourceAnnotation = testResourceAnnotation;
         this.classHasTests = classHasTests;

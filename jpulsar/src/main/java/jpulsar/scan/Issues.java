@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static jpulsar.util.Strings.join;
+import static jpulsar.util.Collections.nonNull;
+import static jpulsar.util.Strings.joinSpaced;
 
 public class Issues {
     private List<String> issues = new ArrayList<>();
@@ -13,11 +14,11 @@ public class Issues {
         return issues;
     }
 
-    public void addIssue(String... s) {
+    public void addIssue(String s) {
         addIssue(Arrays.asList(s));
     }
 
-    public void addIssue(List<String> s) {
-        issues.add(String.join(" ", s));
+    public void addIssue(List<Object> s) {
+        issues.add(joinSpaced(nonNull(s)));
     }
 }

@@ -11,7 +11,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import static jpulsar.util.Streams.map;
+import static jpulsar.util.Collections.map;
 
 public class SerialTester {
     public static TestRunResult runTests(TestScanResult scanInfo) {
