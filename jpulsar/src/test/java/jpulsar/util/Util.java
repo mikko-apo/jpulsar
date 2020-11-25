@@ -1,6 +1,7 @@
 package jpulsar.util;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.function.Predicate;
 
 import static jpulsar.util.Strings.join;
@@ -26,4 +27,10 @@ public class Util {
         return foundItems.get(0);
     }
 
+    public static <T> String getPackagePath(Class<T> clazz) {
+        String[] full = clazz.getName().split("\\.");
+        String[] packagePath = Arrays.copyOf(full, full.length - 1);
+
+        return String.join(".", packagePath);
+    }
 }

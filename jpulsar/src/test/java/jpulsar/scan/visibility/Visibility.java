@@ -11,7 +11,7 @@ import jpulsar.scan.resources.TestResource6;
 import jpulsar.scan.resources.TestResource7;
 import jpulsar.scan.resources.TestResource8;
 
-public class VisibilityTest {
+public class Visibility {
     static public TestResource1 testResource1;
     static protected TestResource3 testResource3;
     static TestResource2 testResource2;
@@ -21,18 +21,18 @@ public class VisibilityTest {
     TestResource6 testResource6;
     private TestResource8 testResource8;
 
-    public VisibilityTest(TestResource1 tr1) {
+    public Visibility(TestResource1 tr1) {
     }
 
-    VisibilityTest(TestResource2 tr2) {
-
-    }
-
-    protected VisibilityTest(TestResource3 tr3) {
+    Visibility(TestResource2 tr2) {
 
     }
 
-    private VisibilityTest(TestResource4 tr4) {
+    protected Visibility(TestResource3 tr3) {
+
+    }
+
+    private Visibility(TestResource4 tr4) {
     }
 
     @TestResource

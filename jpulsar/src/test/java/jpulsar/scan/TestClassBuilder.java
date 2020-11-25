@@ -12,8 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TestClassBuilder {
-    TestClass<?> testClass;
-    List<TestClass<?>> testClasses = new ArrayList<>();
+    public TestClass<?> testClass;
+    public final List<TestClass<?>> testClasses = new ArrayList<>();
 
     static public jpulsar.Test createTestAnnotation(String name, String[] usecases, String[] tags) {
         return new jpulsar.Test() {
