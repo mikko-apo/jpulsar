@@ -11,9 +11,7 @@ public class Strings {
     }
 
     public static <T> String join(Collection<T> collection, String delimiter) {
-        return collection.stream()
-                .map(Object::toString)
-                .collect(Collectors.joining(delimiter));
+        return mapJoin(collection, t -> t, delimiter);
     }
 
     public static <T> String mapJoin(Collection<T> collection, Function<T, Object> mapper, String delimiter) {

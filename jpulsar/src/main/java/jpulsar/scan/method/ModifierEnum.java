@@ -5,7 +5,7 @@ import java.util.List;
 
 import static jpulsar.util.Collections.filter;
 
-public enum ModifierHelper {
+public enum ModifierEnum {
     PUBLIC("public"),
     PROTECTED("protected"),
     PACKAGE("package"),
@@ -14,16 +14,16 @@ public enum ModifierHelper {
 
     public final String name;
 
-    ModifierHelper(String name) {
+    ModifierEnum(String name) {
         this.name = name;
     }
 
-    public static List<ModifierHelper> hasModifiers(int modifiers, ModifierHelper... visibility) {
-        return filter(visibility, modifierHelper -> hasModifier(modifiers, modifierHelper));
+    public static List<ModifierEnum> hasModifiers(int modifiers, ModifierEnum... visibility) {
+        return filter(visibility, modifierEnum -> hasModifier(modifiers, modifierEnum));
     }
 
-    private static boolean hasModifier(int modifiers, ModifierHelper modifierHelper) {
-        switch (modifierHelper) {
+    private static boolean hasModifier(int modifiers, ModifierEnum modifierEnum) {
+        switch (modifierEnum) {
             case PUBLIC:
                 return Modifier.isPublic(modifiers);
             case PROTECTED:

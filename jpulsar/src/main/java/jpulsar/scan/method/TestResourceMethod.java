@@ -38,5 +38,10 @@ public class TestResourceMethod extends Issues {
         }
         return scope;
     }
+
+    public String name() {
+        String name = testResourceAnnotation.name();
+        return name.equals("") ? null : name;
+    }
 }
 

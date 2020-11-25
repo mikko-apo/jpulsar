@@ -1,6 +1,6 @@
 package jpulsar.scan;
 
-import jpulsar.scan.method.ModifierHelper;
+import jpulsar.scan.method.ModifierEnum;
 import jpulsar.scan.method.TestResourceMethod;
 import jpulsar.util.NamedItem;
 
@@ -14,16 +14,16 @@ import static jpulsar.util.Strings.join;
 import static jpulsar.util.Strings.mapJoin;
 
 public class ScanErrors {
-    public static String invalidAttributes(List<ModifierHelper> foundInvalidModifiers) {
+    public static String invalidAttributes(List<ModifierEnum> foundInvalidModifiers) {
         return "invalid attributes: " + mapJoin(foundInvalidModifiers,
-                modifierHelper -> modifierHelper.name,
+                modifierEnum -> modifierEnum.name,
                 ",");
     }
 
     public static List<Object> noMatchingTestResources(int i,
                                                   String nameFromTestMethodParameterAnnotation,
                                                   Class<?> testResourceParam) {
-        return asList("could not find matching test resource for parameter",
+        return asList("could not find test resource for parameter",
                 i,
                 nameFromTestMethodParameterAnnotation,
                 testResourceParam);
@@ -45,9 +45,10 @@ public class ScanErrors {
     }
 
     public static List<Object> parametrizedArgument(int i, List<String> params) {
-        return asList("parameter",
-                Integer.toString(i),
-                " is parameterized: " + join(params, ","));
+        return asList("parameterized method parameter",
+                i,
+                "is not supported:",
+                join(params, ","));
     }
 
     public static List<Object> invalidParameter(int i, Type parameterType) {
@@ -60,5 +61,13 @@ public class ScanErrors {
 
     public static List<Object> tooManyConstructors(Constructor<?>[] constructors) {
         return asList("has", constructors.length, "constructors. Should have 1 constructor");
+    }
+
+    public static List<Object> testAndTestResourceAnnotation() {
+        return asList("has both @Test and @TestResource annotations. Can have only one.");
+    }
+
+    public static List<Object> parametrizedReturnType(Type returnType) {
+        return asList("parametrized returnType is not supported", returnType.getTypeName());
     }
 }

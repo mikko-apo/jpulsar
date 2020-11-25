@@ -4,11 +4,12 @@ import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ClassInfoList;
 import io.github.classgraph.ScanResult;
+import jpulsar.ResourceHandler;
 import jpulsar.Test;
 import jpulsar.TestResource;
 import jpulsar.TestResourceScope;
 import jpulsar.scan.method.ConstructorInfo;
-import jpulsar.scan.method.ModifierHelper;
+import jpulsar.scan.method.ModifierEnum;
 import jpulsar.scan.method.TestMethod;
 import jpulsar.scan.method.TestResourceMethod;
 import jpulsar.util.NamedItem;
@@ -18,6 +19,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -62,17 +65,24 @@ public class Scanner {
             TestClass<?> testClass = new TestClass<>(aClass);
             testScanResult.addTestClass(testClass);
 
-            checkConstructors(aClass.getConstructors(), testClass);
+            checkConstructors(aClass.getDeclaredConstructors(), testClass);
 
             boolean testResourcesHaveClassScope = classesWithTests.contains(classInfo);
             Set<Method> methods = new LinkedHashSet<>();
             methods.addAll(asList(aClass.getMethods()));
             methods.addAll(asList(aClass.getDeclaredMethods()));
-            processMethods(methods, testClass, testResourcesHaveClassScope);
+            ArrayList<Method> sortedMethods = new ArrayList<>(methods);
+            sortedMethods.sort(Comparator.comparing(Method::getName));
+            processMethods(sortedMethods, testClass, testResourcesHaveClassScope);
 
             List<TestResourceMethod> globalTestResourceMethods = filter(testClass.getTestResources(),
                     testResourceMethod -> testResourceMethod.scope() == TestResourceScope.GLOBAL);
             testScanResult.getGlobalTestResourceMethods().addAll(globalTestResourceMethods);
+        }
+        for (TestClass<?> testClass : testScanResult.getTestClasses()) {
+            for (TestMethod testMethod : testClass.getTestMethods()) {
+                resolveTestResourceMethods(testClass, testMethod, testScanResult.getGlobalTestResourceMethods());
+            }
         }
         return testScanResult;
     }
@@ -89,7 +99,7 @@ public class Scanner {
         }
     }
 
-    private static void processMethods(Set<Method> methods,
+    private static void processMethods(Collection<Method> methods,
                                        TestClass<?> testClass,
                                        boolean testResourcesHaveClassScope) {
         for (Method method : methods) {
@@ -116,7 +126,7 @@ public class Scanner {
                     target = testResource;
                 }
                 if (isTestResource && isTest) {
-                    target.addIssue("has both @Test and @TestResource annotations. Can have only one.");
+                    target.addIssue(ScanErrors.testAndTestResourceAnnotation());
                 }
             }
         }
@@ -137,10 +147,10 @@ public class Scanner {
     }
 
     private static void checkCorrectModifiers(Issues target, int modifiers) {
-        List<ModifierHelper> foundInvalidModifiers = ModifierHelper.hasModifiers(modifiers,
-                ModifierHelper.PRIVATE,
-                ModifierHelper.PROTECTED,
-                ModifierHelper.ABSTRACT);
+        List<ModifierEnum> foundInvalidModifiers = ModifierEnum.hasModifiers(modifiers,
+                ModifierEnum.PRIVATE,
+                ModifierEnum.PROTECTED,
+                ModifierEnum.ABSTRACT);
         if (foundInvalidModifiers.size() > 0) {
             target.addIssue(invalidAttributes(foundInvalidModifiers));
         }
@@ -161,6 +171,54 @@ public class Scanner {
         if (enabledFeatures.size() > 0) {
             testResourceMethod.addIssue(ScanErrors.tooManyFeatures(enabledFeatures));
         }
+        Type returnType = method.getGenericReturnType();
+        if(returnType instanceof ParameterizedType && !(returnType instanceof ResourceHandler)) {
+            testResourceMethod.addIssue(ScanErrors.parametrizedReturnType(returnType));
+        }
         return testResourceMethod;
+    }
+
+    private static void resolveTestResourceMethods(TestClass<?> testClass,
+                                                   TestMethod testMethod,
+                                                   List<TestResourceMethod> globalTestResourceMethods) {
+        Class<?>[] parameterTypes = testMethod.getMethod().getParameterTypes();
+        for (int i = 0; i < parameterTypes.length; i++) {
+            Class<?> testResourceParam = parameterTypes[i];
+            String nameFromTestMethodParameterAnnotation = null;
+            List<TestResourceMethod> matchingGlobalTestResources = resolveMatchingTestResourceMethods(
+                    globalTestResourceMethods,
+                    testResourceParam,
+                    nameFromTestMethodParameterAnnotation);
+            List<TestResourceMethod> matchingClassTestResources = resolveMatchingTestResourceMethods(
+                    testClass.getTestResources(),
+                    testResourceParam,
+                    nameFromTestMethodParameterAnnotation);
+            List<TestResourceMethod> allTestResources = new ArrayList<>(matchingGlobalTestResources);
+            allTestResources.addAll(matchingClassTestResources);
+            if (allTestResources.size() == 1) {
+                testMethod.addParameterTestResource(allTestResources.get(0));
+            } else {
+                testMethod.addParameterTestResource(null);
+                if (allTestResources.size() == 0) {
+                    testMethod.addIssue(ScanErrors.noMatchingTestResources(i,
+                            nameFromTestMethodParameterAnnotation,
+                            testResourceParam));
+                } else {
+                    testMethod.addIssue(ScanErrors.tooManyMatchingResources(i,
+                            nameFromTestMethodParameterAnnotation,
+                            testResourceParam,
+                            allTestResources));
+                }
+            }
+        }
+    }
+
+    private static List<TestResourceMethod> resolveMatchingTestResourceMethods(List<TestResourceMethod> testResourceMethods,
+                                                                               Class<?> type,
+                                                                               String name) {
+        return filter(testResourceMethods, testResourceMethod ->
+                testResourceMethod.getMethod().getGenericReturnType() == type
+                        && (name == null || name.equals(testResourceMethod.name()))
+        );
     }
 }

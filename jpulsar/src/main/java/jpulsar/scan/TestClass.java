@@ -30,8 +30,9 @@ public class TestClass<T> extends Issues {
         return constructor;
     }
 
-    public void setConstructor(ConstructorInfo constructor) {
+    public TestClass<T> setConstructor(ConstructorInfo constructor) {
         this.constructor = constructor;
+        return this;
     }
 
     public void addTestMethod(TestMethod testMethod) {

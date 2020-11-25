@@ -26,8 +26,9 @@ public class TestMethod extends Issues {
         return testAnnotation;
     }
 
-    public void addParameterTestResource(TestResourceMethod testResourceMethod) {
+    public TestMethod addParameterTestResource(TestResourceMethod testResourceMethod) {
         parameterTestResources.add(testResourceMethod);
+        return this;
     }
 
     public List<TestResourceMethod> getParameterTestResources() {

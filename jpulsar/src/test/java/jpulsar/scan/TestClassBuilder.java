@@ -8,9 +8,12 @@ import jpulsar.scan.method.TestResourceMethod;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TestClassBuilder {
     TestClass<?> testClass;
+    List<TestClass<?>> testClasses = new ArrayList<>();
 
     static public jpulsar.Test createTestAnnotation(String name, String[] usecases, String[] tags) {
         return new jpulsar.Test() {
@@ -88,10 +91,11 @@ public class TestClassBuilder {
         };
     }
 
-    public <T> TestClass<T> build(Class<T> aClass) {
+    public <T> TestClass<T> addTestClass(Class<T> aClass) {
         TestClass<T> testClass = new TestClass<>(aClass);
-        testClass.setConstructor(new ConstructorInfo(aClass.getConstructors()[0]));
+        testClass.setConstructor(new ConstructorInfo(aClass.getDeclaredConstructors()[0]));
         this.testClass = testClass;
+        testClasses.add(testClass);
         return testClass;
     }
 
