@@ -9,7 +9,10 @@ import jpulsar.scan.method.TestResourceMethod;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+
+import static jpulsar.util.Util.scannerJackson;
 
 public class TestClassBuilder {
     public TestClass<?> testClass;
@@ -108,12 +111,39 @@ public class TestClassBuilder {
     }
 
     public TestResourceMethod addTestResourceMethod(TestResource testResourceAnnotation, String name, boolean classHasTests, Class<?>... parameterTypes) {
-            TestResourceMethod testResource = new TestResourceMethod(
-                    getMethod(testClass.getClazz(), name, parameterTypes),
-                    testResourceAnnotation,
-                    classHasTests);
-            testClass.addTestResource(testResource);
-            return testResource;
+        TestResourceMethod testResource = new TestResourceMethod(
+                getMethod(testClass.getClazz(), name, parameterTypes),
+                testResourceAnnotation,
+                classHasTests);
+        testClass.addTestResource(testResource);
+        return testResource;
+    }
+
+    public void compareTestClasses(List<TestClass<?>> testClasses) {
+        sortTestClasses(testClasses);
+        sortTestClasses(this.testClasses);
+        scannerJackson.jsonEquals(this.testClasses, testClasses);
+    }
+
+    private static void sortTestClasses(List<TestClass<?>> testClasses) {
+        Comparator<TestClass<?>> testClassComparator = Comparator.comparing(testClass -> testClass.getClazz().getName());
+        Comparator<TestMethod> testMethodComparator = Comparator.comparing(
+                testMethod -> testMethod.getMethod().getName());
+        Comparator<TestResourceMethod> testResourceMethodComparator = Comparator.comparing(
+                testResourceMethod -> testResourceMethod.getMethod().getName());
+        Comparator<String> stringComparator = Comparator.comparing(s -> s);
+        testClasses.sort(testClassComparator);
+        for (TestClass<?> testClass : testClasses) {
+            testClass.getTestMethods().sort(testMethodComparator);
+            for(TestMethod testMethod : testClass.getTestMethods()) {
+                testMethod.getIssues().sort(stringComparator);
+            }
+            testClass.getTestResources().sort(testResourceMethodComparator);
+            for(TestResourceMethod testResourceMethod : testClass.getTestResources()) {
+                testResourceMethod.getIssues().sort(stringComparator);
+            }
+            testClass.getIssues().sort(stringComparator);
+        }
     }
 
     static private Method getMethod(Class<?> aClass, String name, Class<?>... parameterTypes) {

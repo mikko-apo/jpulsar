@@ -33,6 +33,6 @@ public class SimpleErrorsTest {
         t3.getIssues().add("has 2 constructors. Should have 1 constructor");
         t3.setConstructor(null);
         builder.addTestMethod(emptyTestAnnotation, "test");
-        scannerJackson.jsonEquals(builder.testClasses, result.getTestClasses());
+        builder.compareTestClasses(result.getTestClasses());
     }
 }

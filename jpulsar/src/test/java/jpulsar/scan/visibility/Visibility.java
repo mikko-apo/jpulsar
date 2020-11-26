@@ -114,4 +114,16 @@ public class Visibility {
     private void test8() {
 
     }
+
+    @Test
+    static public void useAllTestResources(TestResource1 tr1,
+                             TestResource2 tr2,
+                             TestResource3 tr3,
+                             TestResource4 tr4,
+                             TestResource5 tr5,
+                             TestResource6 tr6,
+                             TestResource7 tr7,
+                             TestResource8 tr8) {
+
+    }
 }

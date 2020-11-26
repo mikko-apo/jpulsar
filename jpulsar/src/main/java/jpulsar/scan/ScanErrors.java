@@ -23,7 +23,7 @@ public class ScanErrors {
     public static List<Object> noMatchingTestResources(int i,
                                                   String nameFromTestMethodParameterAnnotation,
                                                   Class<?> testResourceParam) {
-        return asList("could not find test resource for parameter",
+        return asList("could not find @TestResource for parameter",
                 i,
                 nameFromTestMethodParameterAnnotation,
                 testResourceParam);
@@ -35,11 +35,11 @@ public class ScanErrors {
                                                         List<TestResourceMethod> testResources) {
         return asList("Found",
                 testResources.size(),
-                "test resources for parameter",
+                "@TestResources for parameter",
                 i,
                 nameFromTestMethodParameterAnnotation,
                 testResourceParam,
-                ". Matching test resources:",
+                ". Matching @TestResources:",
                 map(testResources, testResourceMethod -> testResourceMethod.getMethod().getName())
         );
     }
@@ -69,5 +69,17 @@ public class ScanErrors {
 
     public static List<Object> parametrizedReturnType(Type returnType) {
         return asList("parametrized returnType is not supported", returnType.getTypeName());
+    }
+
+    public static List<Object> unusedTestResource() {
+        return asList("unused @TestResource. There are no @Tests or @TestResources using this @TestResource.");
+    }
+
+    public static List<Object> testResourceDependenciesNotSupported(Type[] genericParameterTypes) {
+        return asList("this @TestResource references other @TestResources. This is not supported.");
+    }
+
+    public static List<Object> sameTestResourceMoreThanOnce(int i, Class<?> aClass) {
+        return asList("@Test references same @TestResource more than once. Parameter at", i, aClass.getName());
     }
 }

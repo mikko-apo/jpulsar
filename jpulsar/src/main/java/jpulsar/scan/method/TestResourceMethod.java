@@ -1,10 +1,13 @@
 package jpulsar.scan.method;
 
+import jpulsar.ResourceHandler;
 import jpulsar.TestResource;
 import jpulsar.TestResourceScope;
 import jpulsar.scan.Issues;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 
 public class TestResourceMethod extends Issues {
     public static int MaxDefault = 0;
@@ -42,6 +45,18 @@ public class TestResourceMethod extends Issues {
     public String name() {
         String name = testResourceAnnotation.name();
         return name.equals("") ? null : name;
+    }
+
+    public Type actualReturnType() {
+        Type returnType = getMethod().getGenericReturnType();
+        if(returnType instanceof ParameterizedType) {
+            ParameterizedType parameterizedType = (ParameterizedType) returnType;
+            Class<?> rawType = (Class<?>) parameterizedType.getRawType();
+            if(rawType.equals(ResourceHandler.class) ) {
+                return parameterizedType.getActualTypeArguments()[0];
+            }
+        }
+        return returnType;
     }
 }
 
