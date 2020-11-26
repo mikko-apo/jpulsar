@@ -72,4 +72,9 @@ public class TestResources {
     void testWithSameTestResourceTwice(TestResource1 resourceA, TestResource1 resourceB) {
 
     }
+
+    @Test
+    void testWithSupplierDependency(Supplier<TestResource1> trSupplier) {
+
+    }
 }

@@ -32,7 +32,7 @@ import static jpulsar.util.Util.getPackagePath;
 public class VisibilityTests {
     @Test
     void testVisibility() {
-        TestScanResult result = scanPackages(getPackagePath(getClass()), Scanner::collectTestClasses);
+        TestScanResult result = scanPackages(getPackagePath(getClass()), Scanner::collectTestScanResult);
         TestClassBuilder builder = new TestClassBuilder();
 
         List<ModifierEnum> modifiers = asList(

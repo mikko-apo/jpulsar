@@ -25,6 +25,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static java.util.Arrays.asList;
 import static jpulsar.scan.ScanErrors.invalidAttributes;
@@ -47,6 +48,12 @@ public class Scanner {
 
             return processor.apply(scanResult);
         }
+    }
+
+    static public TestScanResult collectTestScanResult(ScanResult scanResult) {
+        TestScanResult testScanResult = collectTestClasses(scanResult);
+        addTestResourceMethodsToTestMethods(testScanResult);
+        return testScanResult;
     }
 
     static public TestScanResult collectTestClasses(ScanResult scanResult) {
@@ -77,6 +84,10 @@ public class Scanner {
                     testResourceMethod -> testResourceMethod.scope() == TestResourceScope.GLOBAL);
             testScanResult.getGlobalTestResourceMethods().addAll(globalTestResourceMethods);
         }
+        return testScanResult;
+    }
+
+    private static void addTestResourceMethodsToTestMethods(TestScanResult testScanResult) {
         Set<TestResourceMethod> globallyUsedTestResources = new HashSet<>();
         for (TestClass<?> testClass : testScanResult.getTestClasses()) {
             Set<TestResourceMethod> usedTestResourcesFromClass = new HashSet<>();
@@ -90,7 +101,6 @@ public class Scanner {
             checkForUnusedTestResources(testClass.getTestResources(), usedTestResourcesFromClass);
         }
         checkForUnusedTestResources(testScanResult.getGlobalTestResourceMethods(), globallyUsedTestResources);
-        return testScanResult;
     }
 
     private static void checkConstructors(Constructor<?>[] constructors, TestClass<?> testClass) {
@@ -193,22 +203,15 @@ public class Scanner {
             TestMethod testMethod,
             List<TestResourceMethod> globalTestResourceMethods) {
         Set<TestResourceMethod> usedTestResources = new HashSet<>();
-        Class<?>[] parameterTypes = testMethod.getMethod().getParameterTypes();
+        Type[] parameterTypes = testMethod.getMethod().getGenericParameterTypes();
         for (int i = 0; i < parameterTypes.length; i++) {
-            Class<?> testResourceParam = parameterTypes[i];
+            Type testResourceParam = resolveParameterType(testMethod, i, parameterTypes[i]);
             String nameFromTestMethodParameterAnnotation = null;
-            List<TestResourceMethod> matchingGlobalTestResources = resolveMatchingTestResourceMethods(
-                    globalTestResourceMethods,
+            List<TestResourceMethod> matchingTestResources = resolveMatchingTestResourceMethods(
                     testResourceParam,
-                    nameFromTestMethodParameterAnnotation);
-            List<TestResourceMethod> matchingClassTestResources = resolveMatchingTestResourceMethods(
-                    testClass.getTestResources(),
-                    testResourceParam,
-                    nameFromTestMethodParameterAnnotation);
-            List<TestResourceMethod> allTestResources = new ArrayList<>(matchingGlobalTestResources);
-            allTestResources.addAll(matchingClassTestResources);
-            if (allTestResources.size() == 1) {
-                TestResourceMethod testResourceMethod = allTestResources.get(0);
+                    nameFromTestMethodParameterAnnotation, globalTestResourceMethods, testClass.getTestResources());
+            if (matchingTestResources.size() == 1) {
+                TestResourceMethod testResourceMethod = matchingTestResources.get(0);
                 testMethod.addParameterTestResource(testResourceMethod);
                 if (usedTestResources.contains(testResourceMethod)) {
                     testMethod.addIssue(ScanErrors.sameTestResourceMoreThanOnce(i, testResourceParam));
@@ -216,7 +219,7 @@ public class Scanner {
                 usedTestResources.add(testResourceMethod);
             } else {
                 testMethod.addParameterTestResource(null);
-                if (allTestResources.size() == 0) {
+                if (matchingTestResources.size() == 0) {
                     testMethod.addIssue(ScanErrors.noMatchingTestResources(i,
                             nameFromTestMethodParameterAnnotation,
                             testResourceParam));
@@ -224,18 +227,35 @@ public class Scanner {
                     testMethod.addIssue(ScanErrors.tooManyMatchingResources(i,
                             nameFromTestMethodParameterAnnotation,
                             testResourceParam,
-                            allTestResources));
+                            matchingTestResources));
                 }
             }
         }
         return usedTestResources;
     }
 
+    private static Type resolveParameterType(TestMethod testMethod, int i, Type parameterType) {
+        Type testResourceParam = parameterType;
+        // BUG: Only @TestFactory can use Supplier<TestResource> signature to parallelize test running
+        if (testResourceParam instanceof ParameterizedType) {
+            ParameterizedType parameterizedType = (ParameterizedType) testResourceParam;
+            if (parameterizedType.getRawType() == Supplier.class) {
+                testResourceParam = parameterizedType.getActualTypeArguments()[0];
+            } else {
+                testMethod.addIssue(ScanErrors.parametrizedArgument(i, map(parameterizedType.getActualTypeArguments(), Type::getTypeName)));
+            }
+        }
+        return testResourceParam;
+    }
+
     private static List<TestResourceMethod> resolveMatchingTestResourceMethods(
-            List<TestResourceMethod> testResourceMethods,
-            Class<?> type,
-            String name) {
-        return filter(testResourceMethods, testResourceMethod ->
+            Type type,
+            String name,
+            List<TestResourceMethod> globalTestResourceMethods,
+            List<TestResourceMethod> classTestResources) {
+        List<TestResourceMethod> allTestResources = new ArrayList<>(globalTestResourceMethods);
+        allTestResources.addAll(classTestResources);
+        return filter(allTestResources, testResourceMethod ->
                 testResourceMethod.actualReturnType() == type
                         && (name == null || name.equals(testResourceMethod.name()))
         );

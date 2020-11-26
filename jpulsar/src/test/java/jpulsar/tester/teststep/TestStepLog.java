@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class TestStepLog {
     @Test
     void logTestSteps() {
-        TestScanResult scanInfo = scanPackages(getPackagePath(TestStepTest.class), Scanner::collectTestClasses);
+        TestScanResult scanInfo = scanPackages(getPackagePath(TestStepTest.class), Scanner::collectTestScanResult);
         TestRunResult result = SerialTester.runTests(scanInfo);
         TestRunResult expectedTestRunResult = new TestRunResult(asList(
                 new TestClassResult<>(TestStepTest.class, asList(

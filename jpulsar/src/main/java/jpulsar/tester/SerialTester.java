@@ -35,10 +35,8 @@ public class SerialTester {
                     .getClazz()
                     .getConstructor(constructorParameters);
             Object testClassInstance = testClassConstructor.newInstance();
-            Class<?>[] parameterTypes = testMethod.getMethod().getParameterTypes();
-            Method method = testClass.getClazz().getMethod(testMethod.getMethod().getName(), parameterTypes);
             try {
-                method.invoke(testClassInstance);
+                testMethod.getMethod().invoke(testClassInstance);
             } catch (InvocationTargetException e) {
                 exception = e.getCause();
             }

@@ -21,8 +21,8 @@ public class ScanErrors {
     }
 
     public static List<Object> noMatchingTestResources(int i,
-                                                  String nameFromTestMethodParameterAnnotation,
-                                                  Class<?> testResourceParam) {
+                                                       String nameFromTestMethodParameterAnnotation,
+                                                       Type testResourceParam) {
         return asList("could not find @TestResource for parameter",
                 i,
                 nameFromTestMethodParameterAnnotation,
@@ -31,7 +31,7 @@ public class ScanErrors {
 
     public static List<Object> tooManyMatchingResources(int i,
                                                         String nameFromTestMethodParameterAnnotation,
-                                                        Class<?> testResourceParam,
+                                                        Type testResourceParam,
                                                         List<TestResourceMethod> testResources) {
         return asList("Found",
                 testResources.size(),
@@ -79,7 +79,7 @@ public class ScanErrors {
         return asList("this @TestResource references other @TestResources. This is not supported.");
     }
 
-    public static List<Object> sameTestResourceMoreThanOnce(int i, Class<?> aClass) {
-        return asList("@Test references same @TestResource more than once. Parameter at", i, aClass.getName());
+    public static List<Object> sameTestResourceMoreThanOnce(int i, Type aClass) {
+        return asList("@Test references same @TestResource more than once. Parameter at", i, aClass.getTypeName());
     }
 }

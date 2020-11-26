@@ -12,12 +12,11 @@ import static jpulsar.scan.ScanErrors.invalidAttributes;
 import static jpulsar.scan.Scanner.scanPackages;
 import static jpulsar.util.ScannerTestUtil.emptyTestAnnotation;
 import static jpulsar.util.Util.getPackagePath;
-import static jpulsar.util.Util.scannerJackson;
 
 public class SimpleErrorsTest {
     @Test
     void simpleErrors() {
-        TestScanResult result = scanPackages(getPackagePath(getClass()), Scanner::collectTestClasses);
+        TestScanResult result = scanPackages(getPackagePath(getClass()), Scanner::collectTestScanResult);
         TestClassBuilder builder = new TestClassBuilder();
 
         builder.addTestClass(AbstractClassTestMethod.class);

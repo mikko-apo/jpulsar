@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class TwoOkTwoFailTest {
     @Test
     void executeTwoOkTestMethodsAndTwoFailures() {
-        TestScanResult scanInfo = scanPackages(getPackagePath(TwoOkTwoFail.class), Scanner::collectTestClasses);
+        TestScanResult scanInfo = scanPackages(getPackagePath(TwoOkTwoFail.class), Scanner::collectTestScanResult);
         TestRunResult result = SerialTester.runTests(scanInfo);
         TestRunResult expectedTestRunResult = new TestRunResult(asList(
                 new TestClassResult<>(TwoOkTwoFail.class, asList(

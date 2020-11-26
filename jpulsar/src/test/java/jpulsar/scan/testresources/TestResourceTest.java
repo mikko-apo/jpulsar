@@ -6,11 +6,11 @@ import jpulsar.scan.TestClassBuilder;
 import jpulsar.scan.TestScanResult;
 import jpulsar.scan.method.TestResourceMethod;
 import jpulsar.scan.resources.TestResource1;
-import jpulsar.scan.resources.TestResource2;
-import jpulsar.scan.resources.TestResource3;
 import jpulsar.scan.resources.TestResource4;
 import jpulsar.scan.resources.TestResource5;
 import org.junit.jupiter.api.Test;
+
+import java.util.function.Supplier;
 
 import static jpulsar.scan.Scanner.scanPackages;
 import static jpulsar.util.ScannerTestUtil.emptyTestAnnotation;
@@ -21,7 +21,7 @@ public class TestResourceTest {
     @Test
     void testResources() {
         TestScanResult result = scanPackages(getPackagePath(getClass()),
-                Scanner::collectTestClasses);
+                Scanner::collectTestScanResult);
         TestClassBuilder builder = new TestClassBuilder();
 
         builder.addTestClass(jpulsar.scan.testresources.TestResources.class);
@@ -72,6 +72,9 @@ public class TestResourceTest {
         builder.addTestMethod(emptyTestAnnotation, "testWithSameTestResourceTwice", TestResource1.class, TestResource1.class)
                 .addParameterTestResource(tr1)
                 .addParameterTestResource(tr1).addIssue(ScanErrors.sameTestResourceMoreThanOnce(1, TestResource1.class));
+
+        builder.addTestMethod(emptyTestAnnotation, "testWithSupplierDependency", Supplier.class)
+                .addParameterTestResource(tr1);
 
         builder.compareTestClasses(result.getTestClasses());
     }
