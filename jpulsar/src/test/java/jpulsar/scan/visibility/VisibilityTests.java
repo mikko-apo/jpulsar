@@ -48,7 +48,7 @@ public class VisibilityTests {
 
         builder.addTestClass(Visibility.class)
                 .setConstructor(null)
-                .addIssue(ScanErrors.tooManyConstructors(new Constructor[4]));
+                .addIssue(ScanErrors.tooManyConstructors(new Constructor<?>[4]));
         List<TestResourceMethod> allTrs = new ArrayList<>();
         IntStream.range(1, 9).forEach(i -> {
             TestMethod t = builder.addTestMethod(emptyTestAnnotation, "test" + i);

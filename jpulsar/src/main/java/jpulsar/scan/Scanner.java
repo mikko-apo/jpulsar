@@ -236,7 +236,7 @@ public class Scanner {
 
     private static Type resolveParameterType(TestMethod testMethod, int i, Type parameterType) {
         Type testResourceParam = parameterType;
-        // BUG: Only @TestFactory can use Supplier<TestResource> signature to parallelize test running
+        // TODO: Only @TestFactory can use Supplier<TestResource> signature to parallelize test running
         if (testResourceParam instanceof ParameterizedType) {
             ParameterizedType parameterizedType = (ParameterizedType) testResourceParam;
             if (parameterizedType.getRawType() == Supplier.class) {

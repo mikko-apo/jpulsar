@@ -17,7 +17,7 @@ import static jpulsar.util.Util.getPackagePath;
 import static jpulsar.util.Util.scannerJackson;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class TestStepLog {
+public class TestStepLogTest {
     @Test
     void logTestSteps() {
         TestScanResult scanInfo = scanPackages(getPackagePath(TestStepTest.class), Scanner::collectTestScanResult);
