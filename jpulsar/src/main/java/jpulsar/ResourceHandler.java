@@ -12,4 +12,8 @@ public class ResourceHandler<R> extends TestLifecycleOperations<R, ResourceHandl
     public ResourceHandler<R> getThis() {
         return this;
     }
+
+    public R getResource() {
+        return resource;
+    }
 }

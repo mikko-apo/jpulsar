@@ -1,26 +1,14 @@
 package jpulsar.lifecycle;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
-class LifeCycleOperation<R> {
-    Consumer<R> handler;
-    Runnable runner;
-
-    public LifeCycleOperation(Consumer<R> handler) {
-        this.handler = handler;
-    }
-
-    public LifeCycleOperation(Runnable runner) {
-        this.runner = runner;
-    }
-}
-
 public abstract class TestLifecycleOperations<R, RB> {
-    ArrayList<LifeCycleOperation<?>> beforeAlls = new ArrayList<>();
-    ArrayList<LifeCycleOperation<?>> befores = new ArrayList<>();
-    ArrayList<LifeCycleOperation<?>> afters = new ArrayList<>();
-    ArrayList<LifeCycleOperation<?>> afterAlls = new ArrayList<>();
+    private ArrayList<LifeCycleOperation<?>> beforeAlls = new ArrayList<>();
+    private ArrayList<LifeCycleOperation<?>> befores = new ArrayList<>();
+    private ArrayList<LifeCycleOperation<?>> afters = new ArrayList<>();
+    private ArrayList<LifeCycleOperation<?>> afterAlls = new ArrayList<>();
 
     abstract public RB getThis();
 
@@ -62,5 +50,21 @@ public abstract class TestLifecycleOperations<R, RB> {
     public RB afterAll(Runnable runner) {
         afterAlls.add(new LifeCycleOperation<>(runner));
         return getThis();
+    }
+
+    public List<LifeCycleOperation<?>> getBeforeAlls() {
+        return beforeAlls;
+    }
+
+    public List<LifeCycleOperation<?>> getBefores() {
+        return befores;
+    }
+
+    public List<LifeCycleOperation<?>> getAfters() {
+        return afters;
+    }
+
+    public List<LifeCycleOperation<?>> getAfterAlls() {
+        return afterAlls;
     }
 }
