@@ -2,7 +2,7 @@ package jpulsar.tester;
 
 import java.util.List;
 
-public  class TestClassResult<T> {
+public class TestClassResult<T> {
     private final Class<T> clazz;
     private final List<TestMethodResult> testMethods;
 

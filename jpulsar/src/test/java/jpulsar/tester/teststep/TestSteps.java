@@ -5,7 +5,7 @@ import jpulsar.Test;
 import static jpulsar.step.TestStepCollector.testStep;
 import static jpulsar.util.Threads.sleep;
 
-public class TestStepTest {
+public class TestSteps {
     @Test
     public void step() {
         sleep(10);
