@@ -52,7 +52,7 @@ public @interface TestResource {
      * Scope defines how TestResource is used in test classes.
      * Default: If TestResource function is in a class with @Test functions, scope=Scope.CLASS. Otherwise scope=Scope.GLOBAL
      */
-    TestResourceScope scope() default TestResourceScope.GLOBAL;
+    TestResourceScope scope() default TestResourceScope.DEFAULT;
 
     String[] usecases() default {};
 }

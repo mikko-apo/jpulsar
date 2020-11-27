@@ -2,19 +2,20 @@ package jpulsar.tester;
 
 import jpulsar.step.TestStep;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class TestMethodResult {
     private final String name;
     private final ExceptionResult exception;
-    private Long durationMs;
-    private final List<TestStep> steps;
+    private Integer durationMs;
+    private final List<TestStep> steps = new ArrayList<>();
 
-    public TestMethodResult(String name, ExceptionResult exception, Long durationMs, List<TestStep> steps) {
+    public TestMethodResult(String name, ExceptionResult exception, Integer durationMs, List<TestStep> steps) {
         this.name = name;
         this.exception = exception;
         this.durationMs = durationMs;
-        this.steps = steps;
+        this.steps.addAll(steps);
     }
 
     public String getName() {
@@ -25,11 +26,11 @@ public class TestMethodResult {
         return exception;
     }
 
-    public Long getDurationMs() {
+    public Integer getDurationMs() {
         return durationMs;
     }
 
-    public void setDurationMs(Long durationMs) {
+    public void setDurationMs(Integer durationMs) {
         this.durationMs = durationMs;
     }
 

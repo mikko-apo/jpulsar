@@ -1,20 +1,13 @@
 package jpulsar.util;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.function.Predicate;
 
 import static jpulsar.util.Strings.join;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class Util {
-    static public ObjectMapper sortedJackson = initializeJackson();
+    public static JacksonHelper scannerJackson = JacksonHelper.initializeScannerJackson();
 
     public static <T> T removeOne(ArrayList<T> list, Predicate<T> predicate) {
         ArrayList<Integer> foundIndexes = new ArrayList<>();
@@ -34,25 +27,10 @@ public class Util {
         return foundItems.get(0);
     }
 
-    public static <A, B> void jsonEquals(A a, B b) {
-        assertEquals(jsonPretty(a), jsonPretty(b));
-    }
+    public static <T> String getPackagePath(Class<T> clazz) {
+        String[] full = clazz.getName().split("\\.");
+        String[] packagePath = Arrays.copyOf(full, full.length - 1);
 
-    public static String jsonPretty(Object a) {
-        try {
-            return sortedJackson.writerWithDefaultPrettyPrinter().writeValueAsString(a);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    static private ObjectMapper initializeJackson() {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.enable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES);
-        mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        mapper.enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY);
-        mapper.enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS);
-        return mapper;
+        return String.join(".", packagePath);
     }
 }

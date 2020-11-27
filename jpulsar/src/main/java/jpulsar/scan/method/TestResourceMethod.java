@@ -1,20 +1,62 @@
 package jpulsar.scan.method;
 
-import jpulsar.scan.annotationdata.TestResourceAnnotationData;
+import jpulsar.ResourceHandler;
+import jpulsar.TestResource;
+import jpulsar.TestResourceScope;
+import jpulsar.scan.Issues;
 
-public class TestResourceMethod extends TestMethodBase {
-    private final TestResourceAnnotationData testResourceAnnotation;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 
-    public TestResourceMethod(
-            String methodName,
-            int modifiers,
-            Class<?>[] parameters,
-            TestResourceAnnotationData testResourceAnnotation) {
-        super(methodName, modifiers, parameters);
+public class TestResourceMethod extends Issues {
+    public static int MaxDefault = 0;
+
+    private final Method method;
+    private final TestResource testResourceAnnotation;
+    private final boolean classHasTests;
+
+    public TestResourceMethod(Method method, TestResource testResourceAnnotation, boolean classHasTests) {
+        this.method = method;
         this.testResourceAnnotation = testResourceAnnotation;
+        this.classHasTests = classHasTests;
     }
 
-    public TestResourceAnnotationData getTestResourceAnnotation() {
+    public Method getMethod() {
+        return method;
+    }
+
+    public TestResource getTestResourceAnnotation() {
         return testResourceAnnotation;
     }
+
+    public boolean isClassHasTests() {
+        return classHasTests;
+    }
+
+    public TestResourceScope scope() {
+        TestResourceScope scope = testResourceAnnotation.scope();
+        if (scope == TestResourceScope.DEFAULT) {
+            scope = classHasTests ? TestResourceScope.CLASS : TestResourceScope.GLOBAL;
+        }
+        return scope;
+    }
+
+    public String name() {
+        String name = testResourceAnnotation.name();
+        return name.equals("") ? null : name;
+    }
+
+    public Type actualReturnType() {
+        Type returnType = getMethod().getGenericReturnType();
+        if(returnType instanceof ParameterizedType) {
+            ParameterizedType parameterizedType = (ParameterizedType) returnType;
+            Class<?> rawType = (Class<?>) parameterizedType.getRawType();
+            if(rawType.equals(ResourceHandler.class) ) {
+                return parameterizedType.getActualTypeArguments()[0];
+            }
+        }
+        return returnType;
+    }
 }
+

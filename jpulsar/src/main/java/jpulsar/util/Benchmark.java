@@ -11,20 +11,14 @@ public class Benchmark {
         this.start = start;
     }
 
-    public long durationMsAndSet() {
+    public int durationMsAndSet() {
         long newtime = System.currentTimeMillis();
         long duration = newtime - start;
         start = newtime;
-        return duration;
+        return (int) duration;
     }
 
-    public long durationMs() {
-        return System.currentTimeMillis() - start;
-    }
-
-    public Benchmark copy() {
-        Benchmark benchmark = new Benchmark();
-        benchmark.start = start;
-        return benchmark;
+    public int durationMs() {
+        return (int) (System.currentTimeMillis() - start);
     }
 }

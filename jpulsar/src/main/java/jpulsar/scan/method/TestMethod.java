@@ -1,16 +1,37 @@
 package jpulsar.scan.method;
 
-import jpulsar.scan.annotationdata.TestAnnotationData;
+import jpulsar.Test;
+import jpulsar.scan.Issues;
 
-public class TestMethod extends TestMethodBase {
-    private TestAnnotationData testAnnotationData;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
-    public TestMethod(String methodName, int modifiers, Class<?>[] methodParameterTypes, TestAnnotationData testAnnotation) {
-        super(methodName, modifiers, methodParameterTypes);
-        testAnnotationData = testAnnotation;
+public class TestMethod extends Issues {
+
+    private final Method method;
+    private final Test testAnnotation;
+    private final List<TestResourceMethod> parameterTestResources = new ArrayList<>();
+
+    public TestMethod(Method method, Test testAnnotation) {
+        this.method = method;
+        this.testAnnotation = testAnnotation;
     }
 
-    public TestAnnotationData getTestAnnotationData() {
-        return testAnnotationData;
+    public Method getMethod() {
+        return method;
+    }
+
+    public Test getTestAnnotation() {
+        return testAnnotation;
+    }
+
+    public TestMethod addParameterTestResource(TestResourceMethod testResourceMethod) {
+        parameterTestResources.add(testResourceMethod);
+        return this;
+    }
+
+    public List<TestResourceMethod> getParameterTestResources() {
+        return parameterTestResources;
     }
 }

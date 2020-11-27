@@ -1,7 +1,17 @@
 package jpulsar.scan.method;
 
-public class ConstructorInfo extends TestMethodBase {
-    public ConstructorInfo(int modifiers, Class<?>[] methodParameterTypes) {
-        super(null, modifiers, methodParameterTypes);
+import jpulsar.scan.Issues;
+
+import java.lang.reflect.Constructor;
+
+public class ConstructorInfo extends Issues {
+    private final Constructor<?> constructor;
+
+    public ConstructorInfo(Constructor<?> constructor) {
+        this.constructor = constructor;
+    }
+
+    public Constructor<?> getConstructor() {
+        return constructor;
     }
 }

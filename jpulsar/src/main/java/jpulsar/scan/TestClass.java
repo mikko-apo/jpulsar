@@ -1,13 +1,11 @@
 package jpulsar.scan;
 
-import io.github.classgraph.MethodInfo;
 import jpulsar.ResourceHandler;
 import jpulsar.scan.method.ConstructorInfo;
 import jpulsar.scan.method.TestMethod;
 import jpulsar.scan.method.TestResourceMethod;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class TestClass<T> extends Issues {
@@ -15,39 +13,26 @@ public class TestClass<T> extends Issues {
     final private List<TestMethod> testMethods;
     final private List<TestResourceMethod> testResources;
     List<ResourceHandler<?>> resourceHandlers = new ArrayList<>();
-    private ConstructorInfo constructorInfo;
+    private ConstructorInfo constructor;
 
     public TestClass(Class<T> clazz) {
         this(clazz, null, new ArrayList<>(), new ArrayList<>());
     }
 
-    public TestClass(Class<T> clazz, ConstructorInfo constructorInfo, List<TestMethod> testMethods, List<TestResourceMethod> testResources) {
+    public TestClass(Class<T> clazz, ConstructorInfo constructor, List<TestMethod> testMethods, List<TestResourceMethod> testResources) {
         this.clazz = clazz;
-        this.constructorInfo = constructorInfo;
+        this.constructor = constructor;
         this.testMethods = testMethods;
         this.testResources = testResources;
     }
 
-    public void addClassIssue(String... s) {
-        List<String> list = new ArrayList<>();
-        list.add(clazz.getName());
-        list.addAll(Arrays.asList(s));
-        addIssue(list);
+    public ConstructorInfo getConstructor() {
+        return constructor;
     }
 
-    public void addMethodIssue(MethodInfo method, String s) {
-        List<String> list = new ArrayList<>();
-        list.add(clazz.getName() + "." + method.getName() + "()");
-        list.addAll(Arrays.asList(s));
-        addIssue(list);
-    }
-
-    public ConstructorInfo getConstructorInfo() {
-        return constructorInfo;
-    }
-
-    public void setConstructorInfo(ConstructorInfo constructorInfo) {
-        this.constructorInfo = constructorInfo;
+    public TestClass<T> setConstructor(ConstructorInfo constructor) {
+        this.constructor = constructor;
+        return this;
     }
 
     public void addTestMethod(TestMethod testMethod) {

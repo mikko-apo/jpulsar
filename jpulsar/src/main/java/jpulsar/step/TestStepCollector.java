@@ -51,7 +51,7 @@ public class TestStepCollector {
 
     private <T> T add(String name, Supplier<T> testBlock) {
         Throwable throwable = null;
-        long startMs = benchmark.durationMs();
+        int startMs = benchmark.durationMs();
         try {
             return testBlock.get();
         } catch (Throwable t) {
@@ -65,6 +65,4 @@ public class TestStepCollector {
             steps.add(new TestStep(name, exceptionResult, startMs, benchmark.durationMs() - startMs));
         }
     }
-
-
 }
