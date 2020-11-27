@@ -1,5 +1,8 @@
 package jpulsar.tester;
 
+import jpulsar.ResourceHandler;
+import jpulsar.lifecycle.LifeCycleOperation;
+import jpulsar.lifecycle.TestLifecycleOperations;
 import jpulsar.scan.TestClass;
 import jpulsar.scan.TestScanResult;
 import jpulsar.scan.method.ConstructorInfo;
@@ -13,6 +16,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static jpulsar.util.Collections.map;
 
@@ -39,16 +44,18 @@ public class SerialTester {
         Constructor<?> testClassConstructor = constructorInfo.getConstructor();
         try {
             // TODO: Needs to resolve TestClass constructor @TestResource parameters recursively
-            // TODO: .beforeAll() lifecycle method called when created
+            // TODO: needs to support @Test annotations shared, max
             Object testClassInstance = testClassConstructor.newInstance();
-            Object[] params = resolveParametersFromTestResourceMethods(testMethod.getParameterTestResources());
+            MethodParameters methodParameters = resolveParametersFromTestResourceMethods(testMethod.getParameterTestResources());
+            executeLifecycleOps(methodParameters.getResourceHandlers(), TestLifecycleOperations::getBeforeAlls);
+            executeLifecycleOps(methodParameters.getResourceHandlers(), TestLifecycleOperations::getBefores);
             try {
-                // TODO: .before() lifecycle methods
-                testMethod.getMethod().invoke(testClassInstance, params);
+                testMethod.getMethod().invoke(testClassInstance, methodParameters.parameterArray());
             } catch (InvocationTargetException e) {
                 exception = e.getCause();
             } finally {
-                // TODO: .after() lifecycle methods
+                executeLifecycleOps(methodParameters.getResourceHandlers(), TestLifecycleOperations::getAfters);
+                executeLifecycleOps(methodParameters.getResourceHandlers(), TestLifecycleOperations::getAfterAlls);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -62,15 +69,42 @@ public class SerialTester {
         return new TestMethodResult(testMethod.getMethod().getName(), exceptionResult, benchmark.durationMsAndSet(), testStepCollector.getSteps());
     }
 
-    private static Object[] resolveParametersFromTestResourceMethods(List<TestResourceMethod> testResources) {
-        Object[] params = map(testResources, testResourceMethod -> {
+    private static void executeLifecycleOps(List<ResourceHandler<?>> resourceHandlers,
+                                            Function<ResourceHandler<?>, List<LifeCycleOperation<?>>> opListSupplier) {
+        for (ResourceHandler<?> resourceHandler : resourceHandlers) {
+            Object resource = resourceHandler.getResource();
+            for (LifeCycleOperation<?> op : opListSupplier.apply(resourceHandler)) {
+                executeLifecycleOp(resource, op);
+            }
+        }
+    }
+
+    private static <T> void executeLifecycleOp(Object resource, LifeCycleOperation<T> op) {
+        Consumer<T> handler = op.getHandler();
+        if (handler != null) {
+            handler.accept((T)resource);
+        }
+        if(op.getRunner() != null) {
+            op.getRunner().run();
+        }
+    }
+
+    private static MethodParameters resolveParametersFromTestResourceMethods(List<TestResourceMethod> testResources) {
+        MethodParameters methodParameters = new MethodParameters();
+        for (TestResourceMethod testResourceMethod : testResources) {
             try {
-                return initializeAndCallTestResourceMethod(testResourceMethod);
+                Object param = initializeAndCallTestResourceMethod(testResourceMethod);
+                if (param instanceof ResourceHandler) {
+                    ResourceHandler<?> resourceHandler = (ResourceHandler<?>) param;
+                    methodParameters.addResourceHandler(resourceHandler);
+                    param = resourceHandler.getResource();
+                }
+                methodParameters.addParameter(param);
             } catch (InvocationTargetException | IllegalAccessException | NoSuchMethodException | InstantiationException e) {
                 throw new RuntimeException(e);
             }
-        }).toArray();
-        return params;
+        }
+        return methodParameters;
     }
 
     private static Object initializeAndCallTestResourceMethod(TestResourceMethod testResourceMethod) throws
