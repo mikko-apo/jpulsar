@@ -42,6 +42,10 @@ public class TestResourceMethod extends Issues {
         return scope;
     }
 
+    public boolean persistent() {
+        return testResourceAnnotation.shared() || testResourceAnnotation.max() > 0;
+    }
+
     public String name() {
         String name = testResourceAnnotation.name();
         return name.equals("") ? null : name;

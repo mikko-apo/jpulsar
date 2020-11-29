@@ -32,8 +32,6 @@ public class SerialTester {
                     }
             ));
         }
-        // TODO: .afterAll() lifecycle methods
-        // TODO: .afterAll() lifecycle methods called when @TestResource is released
     }
 
     private static <T> TestMethodResult runTestMethod(TestResourceManager manager,
@@ -47,7 +45,6 @@ public class SerialTester {
         Constructor<?> testClassConstructor = constructorInfo.getConstructor();
         try {
             // TODO: Needs to resolve TestClass constructor @TestResource parameters recursively
-            // TODO: needs to support @Test annotations shared, max
             Object testClassInstance = testClassConstructor.newInstance();
             manager.withTestResourceParameters(testMethod.getParameterTestResources(), (objects) ->
                     {

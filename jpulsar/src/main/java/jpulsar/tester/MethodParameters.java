@@ -11,12 +11,12 @@ public class MethodParameters {
     private List<ResourceHandler<?>> resourceHandlers = new ArrayList<>();
     private List<ResourceHandler<?>> privateResourceHandlersAfterAllCalledRightAfterTest = new ArrayList<>();
 
-    public void addParameter(Object param, boolean shared) {
+    public void addParameter(Object param, boolean persistent) {
         if (param instanceof ResourceHandler) {
             ResourceHandler<?> resourceHandler = (ResourceHandler<?>) param;
             resourceHandlers.add(resourceHandler);
             param = resourceHandler.getResource();
-            if(!shared) {
+            if(!persistent) {
                 privateResourceHandlersAfterAllCalledRightAfterTest.add(resourceHandler);
             }
         }
