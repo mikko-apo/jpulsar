@@ -14,7 +14,7 @@ public class ResourceHandlers {
                 .afterAll(tr1 -> tr1.log("afterAll-tr1"));
     }
 
-    @TestResource(shared = true)
+    @TestResource(max = 1)
     public ResourceHandler<TestResource3> tr3() {
         return new ResourceHandler<>(new TestResource3())
                 .beforeAll(tr -> tr.log("beforeAll-tr3"))

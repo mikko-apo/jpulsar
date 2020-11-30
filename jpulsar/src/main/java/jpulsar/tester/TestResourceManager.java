@@ -21,8 +21,8 @@ import static java.util.Arrays.asList;
 import static jpulsar.util.Collections.toList;
 
 public class TestResourceManager implements AutoCloseable {
-    private Map<TestResourceMethod, Object> globalSharedTestResources = new HashMap<>();
-    private Map<TestResourceMethod, Object> classSharedTestResources = new HashMap<>();
+    private Map<TestResourceMethod, Object> globalPersistentTestResources = new HashMap<>();
+    private Map<TestResourceMethod, Object> classPersistentTestResources = new HashMap<>();
 
     public void withTestResourceParameters(List<TestResourceMethod> parameterTestResources, Consumer<Object[]> f) {
         MethodParameters methodParameters = resolveParametersFromTestResourceMethods(parameterTestResources);
@@ -33,25 +33,25 @@ public class TestResourceManager implements AutoCloseable {
     }
 
     public void cleanClassResourceHandlers() {
-        executeLifecycleOpsForTestResources(classSharedTestResources.values(), TestLifecycleOperations::getAfterAlls);
-        classSharedTestResources.clear();
+        executeLifecycleOpsForTestResources(classPersistentTestResources.values(), TestLifecycleOperations::getAfterAlls);
+        classPersistentTestResources.clear();
     }
 
     private MethodParameters resolveParametersFromTestResourceMethods(List<TestResourceMethod> testResourceMethods) {
         MethodParameters methodParameters = new MethodParameters();
         for (TestResourceMethod testResourceMethod : testResourceMethods) {
             Object param = resolveParameter(testResourceMethod);
-            methodParameters.addParameter(param, testResourceMethod.getTestResourceAnnotation().shared());
+            methodParameters.addParameter(param, testResourceMethod.persistent());
         }
         return methodParameters;
     }
 
     private Object resolveParameter(TestResourceMethod testResourceMethod) {
         // if a value exists for @TestResourceMethod in global or class level cache, use the cached version
-        if (classSharedTestResources.containsKey(testResourceMethod)) {
-            return classSharedTestResources.get(testResourceMethod);
-        } else if (globalSharedTestResources.containsKey(testResourceMethod)) {
-            return globalSharedTestResources.get(testResourceMethod);
+        if (classPersistentTestResources.containsKey(testResourceMethod)) {
+            return classPersistentTestResources.get(testResourceMethod);
+        } else if (globalPersistentTestResources.containsKey(testResourceMethod)) {
+            return globalPersistentTestResources.get(testResourceMethod);
         } else {
             try {
                 Object param = initializeAndCallTestResourceMethod(testResourceMethod);
@@ -60,12 +60,12 @@ public class TestResourceManager implements AutoCloseable {
                     ResourceHandler<?> resourceHandler = (ResourceHandler<?>) param;
                     executeLifecycleOps(asList(resourceHandler), TestLifecycleOperations::getBeforeAlls);
                 }
-                // if @TestResourceMethod.shared == true save param to global or class level cache
-                if (testResourceMethod.getTestResourceAnnotation().shared()) {
+                // if @TestResourceMethod shared == true or max > 0 save param to global or class level cache
+                if (testResourceMethod.persistent()) {
                     if (testResourceMethod.scope() == TestResourceScope.GLOBAL) {
-                        globalSharedTestResources.put(testResourceMethod, param);
+                        globalPersistentTestResources.put(testResourceMethod, param);
                     } else {
-                        classSharedTestResources.put(testResourceMethod, param);
+                        classPersistentTestResources.put(testResourceMethod, param);
                     }
                 }
                 return param;
@@ -119,6 +119,6 @@ public class TestResourceManager implements AutoCloseable {
 
     @Override
     public void close() {
-        executeLifecycleOpsForTestResources(globalSharedTestResources.values(), TestLifecycleOperations::getAfterAlls);
+        executeLifecycleOpsForTestResources(globalPersistentTestResources.values(), TestLifecycleOperations::getAfterAlls);
     }
 }
